@@ -1,7 +1,7 @@
 import os
 import random
 from players import Player
-from territories import Territory, TerritoryCard, territories_data
+from territories import Territory, TerritoryCard, territories_data, verify_conquered_continents, continent_to_troops
 from utils import selector
 from win_conditions import check_win, objectives, objectives_descriptions
 import numpy as np
@@ -130,6 +130,14 @@ class Game:
 
     def start_round(self, player):
         player.round_base_placement(3)
+
+        conquered_continents = verify_conquered_continents(player)
+        if conquered_continents:
+            for continent in conquered_continents:
+                print("\nYou have a bonus for conquering an entire continent")
+                troops_to_add = continent_to_troops(continent)
+                player.place_troops(troops_to_add, continent)
+
 
         while True:
             try:

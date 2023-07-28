@@ -24,16 +24,19 @@ class Player:
     def remove_territory(self, territory):
         self.territories.remove(territory)
 
-    def place_troops(self, num_troops):
+    def place_troops(self, num_troops, countries = None):
+        if not countries:
+            countries = self.territories
+
         print(f"{self.name}, place {num_troops} troops on your territories.")
         remaining_troops = num_troops
 
         while remaining_troops > 0:
 
-            selected_territory = selector(self.territories,
-                                                    "\nYour territories:",
-                                                    "\nEnter the number of the territory to put troops on (0 to finish): ",
-                                                    allow_zero=True)
+            selected_territory = selector(countries,
+                                          "\nYour territories:",
+                                          "\nEnter the number of the territory to put troops on (0 to finish): ",
+                                          allow_zero=True)
             
             if selected_territory == 0:
                 break

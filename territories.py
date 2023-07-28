@@ -85,14 +85,9 @@ africa = [Argelia, Egito, Sudao, Congo, Africa_do_Sul, Madagascar]
 asia = [Omsk, Dudinka, Siberia, Vladvostok, Aral, Mongolia, Tchita, Oriente_Medio, India, Vietna, China, Japao]
 oceania = [Sumatra, Borneu, Nova_Guine, Australia]
 
-territories_data = (
-    north_america +
-    south_america +
-    europe +
-    africa +
-    asia +
-    oceania
-)
+continents = [north_america, south_america, europe, africa, asia, oceania]
+
+territories_data = north_america + south_america + europe + africa + asia + oceania
 
 
 def add_edge(country1, country2):
@@ -204,3 +199,24 @@ add_edge(Oriente_Medio, Egito)
 add_edge(India, Sumatra)
 add_edge(Vietna, Borneu)
 
+def verify_conquered_continents(player):
+    conquered_continents = []
+    for continent in continents:
+        if set(continent) <= set(player.territories):
+            conquered_continents.append(continent)
+
+    return conquered_continents
+
+def continent_to_troops(continent):
+    if Mexico in continent:
+        return 5
+    if Brasil in continent:
+        return 2
+    if Franca in continent:
+        return 5
+    if Argelia in continent:
+        return 4
+    if India in continent:
+        return 7
+    if Australia in continent:
+        return 2
