@@ -1,3 +1,5 @@
+from utils import territory_selector
+
 class Player:
     def __init__(self, name):
         self.name = name
@@ -25,28 +27,23 @@ class Player:
         remaining_troops = num_troops
 
         while remaining_troops > 0:
-            print("Your territories:")
-            for i, territory in enumerate(self.territories):
-                print(f"{i+1}. {territory}")
 
-            try:
-                choice = int(input("Enter the number of the territory to put troops on (0 to finish): "))
-                if choice < 0 or choice > len(self.territories):
-                    raise ValueError
+            selected_territory = territory_selector(self.territories,
+                                                    "\nYour territories:",
+                                                    "\nEnter the number of the territory to put troops on (0 to finish): ",
+                                                    allow_zero=True)
+            
+            if selected_territory == 0:
+                break
 
-                if choice == 0:
-                    break
+            troops_to_place = int(input(f"How many troops to place on {selected_territory.name}? "))
 
-                selected_territory = self.territories[choice - 1]
-                troops_to_place = int(input(f"How many troops to place on {selected_territory.name}? "))
-
-                if troops_to_place <= remaining_troops:
-                    selected_territory.troops += troops_to_place
-                    remaining_troops -= troops_to_place
-                else:
-                    print("You don't have enough troops remaining.")
-            except (ValueError, IndexError):
-                print("Invalid input. Please try again.")
+            if troops_to_place <= remaining_troops:
+                selected_territory.troops += troops_to_place
+                remaining_troops -= troops_to_place
+            else:
+                print("You don't have enough troops remaining.")
+        
 
     def round_base_placement(self, num_troops):
         self.place_troops(num_troops)

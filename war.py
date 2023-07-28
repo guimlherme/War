@@ -1,6 +1,7 @@
 import random
 from players import Player
 from territories import Territory, TerritoryCard, add_links, territories_data
+from utils import territory_selector
 import numpy as np
 
 def roll_dice():
@@ -56,6 +57,7 @@ class Game:
 
         # Guarantee that at least 1 troop remains in each territory
         transfered_troops = max(1, attacker.troops - transfered_troops)
+        print(f"\nTransfered troops:{transfered_troops}")
 
         defender.troops = transfered_troops
         attacker.troops = attacker.troops - transfered_troops
@@ -133,16 +135,25 @@ class Game:
 
     def attack_phase(self, player):
         # Assuming a manual attack; you can add more sophisticated game mechanics later
-        attacker_territory = input(f"\n{player.name}, choose a territory to attack from: ")
-        attacker_territory = next((t for t in self.board if t.name == attacker_territory and t.owner.name == player.name), None)
+        attacker_territory = territory_selector(player.territories,
+                                                "\nYour territories:",
+                                                f"\n{player.name}, choose a territory to attack from (0 to cancel): ",
+                                                allow_zero=True)
+        if attacker_territory == 0:
+            return
+        attacker_territory = next((t for t in self.board if t.name == attacker_territory.name and t.owner.name == player.name), None)
 
         if not attacker_territory:
-            print()
-            print("Invalid territory selection. Try again.")
+            print("\nInvalid territory selection. Try again.")
             return
 
-        defender_territory = input(f"{player.name}, choose a territory to attack: ")
-        defender_territory = next((t for t in self.board if t.name == defender_territory and t in attacker_territory.neighbors), None)
+        defender_territory = territory_selector(attacker_territory.neighbors,
+                                                "\nLinked territories:",
+                                                f"\n{player.name}, choose a territory to attack (0 to cancel): ",
+                                                allow_zero=True)
+        if defender_territory == 0:
+            return
+        defender_territory = next((t for t in self.board if t.name == defender_territory.name and t in attacker_territory.neighbors), None)
 
         if not defender_territory:
             print("Invalid target territory selection. Try again.")
@@ -151,15 +162,12 @@ class Game:
         self.attack(attacker_territory, defender_territory)
 
     def play(self):
-        current_round = 1
         current_player_index = 0
         while True:
             current_player = self.players[current_player_index]
             self.start_round(current_player)
 
-            opponent = self.players[1 - current_player_index]
-
-            print(f"\n--- {current_player}'s Turn ---")
+            print(f"\n--- {current_player.name}'s Turn ---")
             self.display_board()
             
             finished_attacking = 0
