@@ -4,7 +4,7 @@ This is an incomplete version of the 'War' game (brazilian version of Risk) to b
 
 How to play:
 
-python war.py
+python game/war.py
 
 Rules:
 
