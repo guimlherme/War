@@ -138,12 +138,14 @@ objectives_descriptions = {
 }
 
 
-def check_win(players):
+def check_win(current_player, players):
     colors = {}
     for player in players:
         colors[player.name] = player.color
+        # Mark player as dead if necessary
+        if len(player.territories) == 0:
+            players.remove(player)
 
-    for player in players:
-      if objectives[player.objective](player, colors):
-        return player
+    if objectives[current_player.objective](current_player, colors):
+        return True
     return False

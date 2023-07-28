@@ -199,8 +199,7 @@ class Game:
 
             # Check if the game is over
             if check_win(self.players):
-                winner = check_win(self.players)
-                print(f"\nCongratulations! {winner.name} won the game!")
+                print(f"\nCongratulations! {current_player.name} won the game!")
                 break
 
             # Switch to the other player for the next turn
@@ -223,7 +222,6 @@ if __name__ == "__main__":
         print(objectives_descriptions[objective])
         input("\nPress enter to hide your objective\n")
         os.system('cls' if os.name == 'nt' else 'clear')
-        print("\n\n\n\n\n\n\n\n\n\n\n\n")
         players.append(Player(player_name, color, objective))
     
     risk_game = Game(players)
