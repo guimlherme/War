@@ -182,8 +182,12 @@ class Game:
 
 
 if __name__ == "__main__":
-    player1_name = input("Enter Player 1's name: ")
-    player2_name = input("Enter Player 2's name: ")
-
-    risk_game = Game([player1_name, player2_name])
+    players = []
+    while True:
+        player_name = input("Enter Player's name (or type 0 to start the game): ")
+        if player_name == '0':
+            break
+        players.append(player_name)
+    
+    risk_game = Game(players)
     risk_game.play()
