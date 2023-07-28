@@ -1,6 +1,6 @@
 import random
 from players import Player
-from territories import Territory, TerritoryCard, add_links, territories_data
+from territories import Territory, TerritoryCard, territories_data
 from utils import territory_selector
 import numpy as np
 
@@ -15,29 +15,23 @@ class Game:
         self.cards = self.setup_territory_cards()
 
     def setup_board(self):
-        
-        # Setting initial territories
+
+        board = territories_data.copy()
+
         territories = territories_data.copy()
-        territories = [Territory(territory_info[0], owner=None, troops=1) for territory_info in territories]
-
-        add_links(territories)  # Add links between territories
-        
         random.shuffle(territories)
-
-        board = []
         split_territories = np.array_split(territories, len(self.players))
         for k, player in enumerate(self.players):
             for territory in split_territories[k].tolist():
                 territory.owner = player
                 player.add_territory(territory)
-                board.append(territory)
         
         return board
     
     def setup_territory_cards(self):
         # Create TerritoryCard objects for each country
-        territory_cards = [TerritoryCard(territory_name, card_type) 
-                           for territory_name, card_type in territories_data]
+        territory_cards = [TerritoryCard(territory.name, territory.shape) 
+                           for territory in territories_data]
         return territory_cards
 
     def display_board(self):
@@ -69,8 +63,8 @@ class Game:
         attacker_dice.sort(reverse=True)
         defender_dice.sort(reverse=True)
 
-        print(f"{attacker.name} rolled: {attacker_dice}")
-        print(f"{defender.name} rolled: {defender_dice}")
+        print(f"{attacker.owner} rolled: {attacker_dice}")
+        print(f"{defender.owner} rolled: {defender_dice}")
 
         # Compare the dice rolls to decide the battle result
         while attacker_dice and defender_dice:
@@ -137,7 +131,7 @@ class Game:
 
         while True:
             try:
-                bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes")
+                bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes ")
                 if bool_reinforce == '1':
                     self.reinforce(player)
                     break
@@ -156,19 +150,19 @@ class Game:
                                                 allow_zero=True)
         if attacker_territory == 0:
             return False
-        attacker_territory = next((t for t in self.board if t.name == attacker_territory.name and t.owner.name == player.name), None)
+        attacker_territory = next((t for t in self.board if t == attacker_territory and t.owner == player), None)
 
         if not attacker_territory:
             print("\nInvalid territory selection. Try again.")
             return False
 
-        defender_territory = territory_selector(attacker_territory.neighbors,
+        defender_territory = territory_selector([t for t in attacker_territory.neighbors if t.owner != player],
                                                 "\nLinked territories:",
                                                 f"\n{player.name}, choose a territory to attack (0 to cancel): ",
                                                 allow_zero=True)
         if defender_territory == 0:
             return False
-        defender_territory = next((t for t in self.board if t.name == defender_territory.name and t in attacker_territory.neighbors), None)
+        defender_territory = next((t for t in self.board if t == defender_territory and t in attacker_territory.neighbors), None)
 
         if not defender_territory:
             print("Invalid target territory selection. Try again.")

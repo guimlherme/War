@@ -1,6 +1,13 @@
 
 
 def territory_selector(territory_list, initial_phrase, selection_phrase, allow_zero):
+    if len(territory_list) == 0:
+        print("Empty possibility list")
+        if allow_zero:
+            return 0
+        else:
+            return None
+
     while True:
         print(initial_phrase)
 

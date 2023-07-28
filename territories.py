@@ -1,151 +1,8 @@
-#TODO: Use the real card shapes
-territories_data = [
-            # North America
-            ("Alasca", "Circle"), ("Mackenzie", "Square"), ("Groelandia", "Triangle"),
-            ("Vancouver", "Square"), ("Ottawa", "Circle"), ("Labrador", "Triangle"),
-            ("California", "Circle"), ("Nova_York", "Triangle"), ("Mexico", "Square"),
-
-            # South America
-            ("Venezuela", "Square"), ("Brasil", "Triangle"), ("Peru", "Circle"), ("Argentina", "Circle"),
-
-            # Europe
-            ("Islandia", "Circle"), ("Inglaterra", "Triangle"), ("Suecia", "Square"),
-            ("Moscou", "Square"), ("Franca", "Circle"), ("Alemanha", "Circle"), ("Polonia", "Triangle"),
-
-            # Africa
-            ("Argelia", "Triangle"), ("Egito", "Circle"), ("Sudao", "Square"), ("Congo", "Circle"),
-            ("Africa_do_Sul", "Square"), ("Madagascar", "Triangle"),
-
-            # Asia
-            ("Omsk", "Square"), ("Dudinka", "Triangle"), ("Siberia", "Square"), ("Vladvostok", "Triangle"),
-            ("Aral", "Circle"), ("Mongolia", "Circle"), ("Tchita", "Square"), ("Oriente_Medio", "Triangle"),
-            ("India", "Square"), ("Vietna", "Triangle"), ("China", "Circle"), ("Japao", "Square"),
-
-
-            ("Sumatra", "Circle"), ("Borneu", "Triangle"),
-            ("Nova_Guine", "Circle"), ("Australia", "Square")
-]
-
-def add_edge(board, country1, country2):
-    countries = [t.name for t in board]
-    index1 = countries.index(country1)
-    index2 = countries.index(country2)
-    board[index1].add_neighbor(board[index2])
-
-
-def add_links(board):
-    add_edge(board, "Brasil", "Argentina")
-    add_edge(board, "Brasil", "Venezuela")
-    add_edge(board, "Brasil", "Peru")
-    add_edge(board, "Argentina", "Peru")
-    add_edge(board, "Venezuela", "Peru")
-
-    # América do Norte
-    add_edge(board, "Alasca", "Mackenzie")
-    add_edge(board, "Alasca", "Vancouver")
-    add_edge(board, "Mackenzie", "Groelandia")
-    add_edge(board, "Mackenzie", "Ottawa")
-    add_edge(board, "Mackenzie", "Vancouver")
-    add_edge(board, "Groelandia", "Labrador")
-    add_edge(board, "Vancouver", "Ottawa")
-    add_edge(board, "Vancouver", "California")
-    add_edge(board, "Ottawa", "Labrador")
-    add_edge(board, "Nova_York", "Labrador")
-    add_edge(board, "Ottawa", "California")
-    add_edge(board, "Ottawa", "Nova_York")
-    add_edge(board, "California", "Nova_York")
-    add_edge(board, "California", "Mexico")
-    add_edge(board, "Nova_York", "Mexico")
-
-    # Europa
-    add_edge(board, "Islandia", "Inglaterra")
-    add_edge(board, "Inglaterra", "Suecia")
-    add_edge(board, "Inglaterra", "Alemanha")
-    add_edge(board, "Inglaterra", "Franca")
-    add_edge(board, "Polonia", "Alemanha")
-    add_edge(board, "Moscou", "Suecia")
-    add_edge(board, "Moscou", "Polonia")
-    add_edge(board, "Franca", "Alemanha")
-    add_edge(board, "Franca", "Polonia")
-
-    # Ásia
-    add_edge(board, "Omsk", "Dudinka")
-    add_edge(board, "Omsk", "Aral")
-    add_edge(board, "Omsk", "Mongolia")
-    add_edge(board, "Dudinka", "Siberia")
-    add_edge(board, "Dudinka", "Tchita")
-    add_edge(board, "Dudinka", "Mongolia")
-    add_edge(board, "Siberia", "Tchita")
-    add_edge(board, "Siberia", "Vladvostok")
-    add_edge(board, "Tchita", "Vladvostok")
-    add_edge(board, "Tchita", "Mongolia")
-    add_edge(board, "Tchita", "China")
-    add_edge(board, "Vladvostok", "China")
-    add_edge(board, "Vladvostok", "Japao")
-    add_edge(board, "Aral", "Oriente_Medio")
-    add_edge(board, "Aral", "India")
-    add_edge(board, "Aral", "China")
-    add_edge(board, "Mongolia", "China")
-    add_edge(board, "China", "Japao")
-    add_edge(board, "China", "Vietna")
-    add_edge(board, "China", "India")
-    add_edge(board, "Vietna", "India")
-    add_edge(board, "India", "Oriente_Medio")
-
-    # África
-    add_edge(board, "Argelia", "Egito")
-    add_edge(board, "Argelia", "Sudao")
-    add_edge(board, "Argelia", "Congo")
-    add_edge(board, "Egito", "Sudao")
-    add_edge(board, "Sudao", "Congo")
-    add_edge(board, "Sudao", "Madagascar")
-    add_edge(board, "Sudao", "Africa_do_Sul")
-    add_edge(board, "Congo", "Africa_do_Sul")
-    add_edge(board, "Africa_do_Sul", "Madagascar")
-
-    # Oceania
-    add_edge(board, "Sumatra", "Australia")
-    add_edge(board, "Borneu", "Nova_Guine")
-    add_edge(board, "Borneu", "Australia")
-    add_edge(board, "Nova_Guine", "Australia")
-
-    # Intercontinentais
-    # América do Sul - América do Norte
-    add_edge(board, "Venezuela", "Mexico")
-
-    # América do Sul - África
-    add_edge(board, "Brasil", "Argelia")
-
-    # América do Norte - Europa
-    add_edge(board, "Groelandia", "Islandia")
-
-    # América do Norte - Asia
-    add_edge(board, "Alasca", "Vladvostok")
-
-    # Europa - Asia
-    add_edge(board, "Polonia", "Oriente_Medio")
-    add_edge(board, "Moscou", "Omsk")
-    add_edge(board, "Moscou", "Aral")
-    add_edge(board, "Moscou", "Oriente_Medio")
-
-    # Europa - África
-    add_edge(board, "Franca", "Argelia")
-    add_edge(board, "Franca", "Egito")
-    add_edge(board, "Polonia", "Egito")
-
-    # Asia - África
-    add_edge(board, "Oriente_Medio", "Egito")
-
-    # Asia - Oceania
-    add_edge(board, "India", "Sumatra")
-    add_edge(board, "Vietna", "Borneu")
-
-    return map
-
 
 class Territory:
-    def __init__(self, name, owner=None, troops=0):
+    def __init__(self, name, shape, owner=None, troops=1):
         self.name = name
+        self.shape = shape
         self.owner = owner
         self.troops = troops
         self.neighbors = []
@@ -166,3 +23,184 @@ class TerritoryCard:
 
     def get_card_type(self):
         return self.card_type
+
+# North America
+Alasca = Territory("Alasca", "Circle")
+Mackenzie = Territory("Mackenzie", "Square")
+Groelandia = Territory("Groelandia", "Triangle")
+Vancouver = Territory("Vancouver", "Square")
+Ottawa = Territory("Ottawa", "Circle")
+Labrador = Territory("Labrador", "Triangle")
+California = Territory("California", "Circle")
+Nova_York = Territory("Nova_York", "Triangle")
+Mexico = Territory("Mexico", "Square")
+
+# South America
+Venezuela = Territory("Venezuela", "Square")
+Brasil = Territory("Brasil", "Triangle")
+Peru = Territory("Peru", "Circle")
+Argentina = Territory("Argentina", "Circle")
+
+# Europe
+Islandia = Territory("Islandia", "Circle")
+Inglaterra = Territory("Inglaterra", "Triangle")
+Suecia = Territory("Suecia", "Square")
+Moscou = Territory("Moscou", "Square")
+Franca = Territory("Franca", "Circle")
+Alemanha = Territory("Alemanha", "Circle")
+Polonia = Territory("Polonia", "Triangle")
+
+# Africa
+Argelia = Territory("Argelia", "Triangle")
+Egito = Territory("Egito", "Circle")
+Sudao = Territory("Sudao", "Square")
+Congo = Territory("Congo", "Circle")
+Africa_do_Sul = Territory("Africa_do_Sul", "Square")
+Madagascar = Territory("Madagascar", "Triangle")
+
+# Asia
+Omsk = Territory("Omsk", "Square")
+Dudinka = Territory("Dudinka", "Triangle")
+Siberia = Territory("Siberia", "Square")
+Vladvostok = Territory("Vladvostok", "Triangle")
+Aral = Territory("Aral", "Circle")
+Mongolia = Territory("Mongolia", "Circle")
+Tchita = Territory("Tchita", "Square")
+Oriente_Medio = Territory("Oriente_Medio", "Triangle")
+India = Territory("India", "Square")
+Vietna = Territory("Vietna", "Triangle")
+China = Territory("China", "Circle")
+Japao = Territory("Japao", "Square")
+
+# Oceania
+Sumatra = Territory("Sumatra", "Circle")
+Borneu = Territory("Borneu", "Triangle")
+Nova_Guine = Territory("Nova_Guine", "Circle")
+Australia = Territory("Australia", "Square")
+
+north_america= [Alasca, Mackenzie, Groelandia, Vancouver, Ottawa, Labrador, California, Nova_York, Mexico]
+south_america = [Venezuela, Brasil, Peru, Argentina]
+europe = [Islandia, Inglaterra, Suecia, Moscou, Franca, Alemanha, Polonia]
+africa = [Argelia, Egito, Sudao, Congo, Africa_do_Sul, Madagascar]
+asia = [Omsk, Dudinka, Siberia, Vladvostok, Aral, Mongolia, Tchita, Oriente_Medio, India, Vietna, China, Japao]
+oceania = [Sumatra, Borneu, Nova_Guine, Australia]
+
+territories_data = (
+    north_america +
+    south_america +
+    europe +
+    africa +
+    asia +
+    oceania
+)
+
+
+def add_edge(country1, country2):
+    country1.add_neighbor(country2)
+
+add_edge(Brasil, Argentina)
+add_edge(Brasil, Venezuela)
+add_edge(Brasil, Peru)
+add_edge(Argentina, Peru)
+add_edge(Venezuela, Peru)
+
+# América do Norte
+add_edge(Alasca, Mackenzie)
+add_edge(Alasca, Vancouver)
+add_edge(Mackenzie, Groelandia)
+add_edge(Mackenzie, Ottawa)
+add_edge(Mackenzie, Vancouver)
+add_edge(Groelandia, Labrador)
+add_edge(Vancouver, Ottawa)
+add_edge(Vancouver, California)
+add_edge(Ottawa, Labrador)
+add_edge(Nova_York, Labrador)
+add_edge(Ottawa, California)
+add_edge(Ottawa, Nova_York)
+add_edge(California, Nova_York)
+add_edge(California, Mexico)
+add_edge(Nova_York, Mexico)
+
+# Europa
+add_edge(Islandia, Inglaterra)
+add_edge(Inglaterra, Suecia)
+add_edge(Inglaterra, Alemanha)
+add_edge(Inglaterra, Franca)
+add_edge(Polonia, Alemanha)
+add_edge(Moscou, Suecia)
+add_edge(Moscou, Polonia)
+add_edge(Franca, Alemanha)
+add_edge(Franca, Polonia)
+
+# Ásia
+add_edge(Omsk, Dudinka)
+add_edge(Omsk, Aral)
+add_edge(Omsk, Mongolia)
+add_edge(Dudinka, Siberia)
+add_edge(Dudinka, Tchita)
+add_edge(Dudinka, Mongolia)
+add_edge(Siberia, Tchita)
+add_edge(Siberia, Vladvostok)
+add_edge(Tchita, Vladvostok)
+add_edge(Tchita, Mongolia)
+add_edge(Tchita, China)
+add_edge(Vladvostok, China)
+add_edge(Vladvostok, Japao)
+add_edge(Aral, Oriente_Medio)
+add_edge(Aral, India)
+add_edge(Aral, China)
+add_edge(Mongolia, China)
+add_edge(China, Japao)
+add_edge(China, Vietna)
+add_edge(China, India)
+add_edge(Vietna, India)
+add_edge(India, Oriente_Medio)
+
+# África
+add_edge(Argelia, Egito)
+add_edge(Argelia, Sudao)
+add_edge(Argelia, Congo)
+add_edge(Egito, Sudao)
+add_edge(Sudao, Congo)
+add_edge(Sudao, Madagascar)
+add_edge(Sudao, Africa_do_Sul)
+add_edge(Congo, Africa_do_Sul)
+add_edge(Africa_do_Sul, Madagascar)
+
+# Oceania
+add_edge(Sumatra, Australia)
+add_edge(Borneu, Nova_Guine)
+add_edge(Borneu, Australia)
+add_edge(Nova_Guine, Australia)
+
+# Intercontinentais
+# América do Sul - América do Norte
+add_edge(Venezuela, Mexico)
+
+# América do Sul - África
+add_edge(Brasil, Argelia)
+
+# América do Norte - Europa
+add_edge(Groelandia, Islandia)
+
+# América do Norte - Asia
+add_edge(Alasca, Vladvostok)
+
+# Europa - Asia
+add_edge(Polonia, Oriente_Medio)
+add_edge(Moscou, Omsk)
+add_edge(Moscou, Aral)
+add_edge(Moscou, Oriente_Medio)
+
+# Europa - África
+add_edge(Franca, Argelia)
+add_edge(Franca, Egito)
+add_edge(Polonia, Egito)
+
+# Asia - África
+add_edge(Oriente_Medio, Egito)
+
+# Asia - Oceania
+add_edge(India, Sumatra)
+add_edge(Vietna, Borneu)
+
