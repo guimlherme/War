@@ -1,6 +1,6 @@
 
 
-def territory_selector(territory_list, initial_phrase, selection_phrase, allow_zero):
+def selector(territory_list, initial_phrase, selection_phrase, allow_zero):
     if len(territory_list) == 0:
         print("Empty possibility list")
         if allow_zero:
@@ -17,8 +17,11 @@ def territory_selector(territory_list, initial_phrase, selection_phrase, allow_z
         try:
             choice = int(input(selection_phrase))
 
-            if choice == 0 and allow_zero:
-                return 0
+            if choice == 0:
+                if allow_zero:
+                    return 0
+                else:
+                    raise ValueError
 
             if choice < 0 or choice > len(territory_list):
                 raise ValueError

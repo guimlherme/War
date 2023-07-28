@@ -1,8 +1,10 @@
-from utils import territory_selector
+from utils import selector
 
 class Player:
-    def __init__(self, name):
+    def __init__(self, name, color, objective):
         self.name = name
+        self.color = color
+        self.objective = objective
         self.territories = []
         self.cards = []
 
@@ -28,7 +30,7 @@ class Player:
 
         while remaining_troops > 0:
 
-            selected_territory = territory_selector(self.territories,
+            selected_territory = selector(self.territories,
                                                     "\nYour territories:",
                                                     "\nEnter the number of the territory to put troops on (0 to finish): ",
                                                     allow_zero=True)

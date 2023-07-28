@@ -1,15 +1,17 @@
+import os
 import random
 from players import Player
 from territories import Territory, TerritoryCard, territories_data
-from utils import territory_selector
+from utils import selector
+from win_conditions import check_win, objectives, objectives_descriptions
 import numpy as np
 
 def roll_dice():
     return random.randint(1, 6)
 
 class Game:
-    def __init__(self, player_names = ['heitor', '01']):
-        self.players = [Player(player_name) for player_name in player_names]
+    def __init__(self, players):
+        self.players = players
         self.current_card_troop_exchange = 4
         self.board = self.setup_board()
         self.cards = self.setup_territory_cards()
@@ -144,7 +146,7 @@ class Game:
 
     def attack_phase(self, player):
         # Assuming a manual attack; you can add more sophisticated game mechanics later
-        attacker_territory = territory_selector(player.territories,
+        attacker_territory = selector(player.territories,
                                                 "\nYour territories:",
                                                 f"\n{player.name}, choose a territory to attack from (0 to cancel): ",
                                                 allow_zero=True)
@@ -156,7 +158,7 @@ class Game:
             print("\nInvalid territory selection. Try again.")
             return False
 
-        defender_territory = territory_selector([t for t in attacker_territory.neighbors if t.owner != player],
+        defender_territory = selector([t for t in attacker_territory.neighbors if t.owner != player],
                                                 "\nLinked territories:",
                                                 f"\n{player.name}, choose a territory to attack (0 to cancel): ",
                                                 allow_zero=True)
@@ -196,9 +198,9 @@ class Game:
             
 
             # Check if the game is over
-            # TODO: implement the winning condition cards
-            if len(set(t.owner for t in self.board)) == 1:
-                print(f"\nCongratulations! {current_player.name} won the game!")
+            if check_win(self.players):
+                winner = check_win(self.players)
+                print(f"\nCongratulations! {winner.name} won the game!")
                 break
 
             # Switch to the other player for the next turn
@@ -207,11 +209,22 @@ class Game:
 
 if __name__ == "__main__":
     players = []
+    colors = ['Azul', 'Amarelo', 'Vermelho', 'Cinza', 'Roxo', 'Verde']
+    objectives_list = objectives.copy()
     while True:
-        player_name = input("Enter Player's name (or leave blank to start the game): ")
+        player_name = input("\nEnter Player's name (or leave blank to start the game): ")
         if not player_name:
             break
-        players.append(player_name)
+        color = selector(colors, "\nCores disponíveis:","\nSelecione uma cor para o jogador:", False)
+        colors.remove(color)
+        objective = random.choice(objectives_list)
+        objectives_list.remove(objective)
+        input("\nPress enter to see your objective\n")
+        print(objectives_descriptions[objective])
+        input("\nPress enter to hide your objective\n")
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("\n\n\n\n\n\n\n\n\n\n\n\n")
+        players.append(Player(player_name, color, objective))
     
     risk_game = Game(players)
     risk_game.play()
