@@ -12,10 +12,9 @@ class Game:
         self.players = [Player(player_name) for player_name in player_names]
         self.current_card_troop_exchange = 4
         self.board = self.setup_board()
-        self.territory_cards = self.setup_territory_cards()
+        self.cards = self.setup_territory_cards()
 
     def setup_board(self):
-        
         
         # Setting initial territories
         territories = territories_data.copy()
@@ -85,8 +84,10 @@ class Game:
         if defender.troops <= 0:
             self.conquer_territory(attacker, defender)
             print(f"{attacker.name} won the battle and conquered {defender.name}!")
+            return True
         else:
             print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
+            return False
 
     def get_player_by_name(self, name):
         for player in self.players:
@@ -111,8 +112,8 @@ class Game:
             if all(card in player.get_card_types() for card in card_set):
                 for card in card_set:
                     removed_card = player.remove_one_card_from_type(card)
-                    self.territory_cards.append(removed_card)
-                    random.shuffle(self.territory_cards)
+                    self.cards.append(removed_card)
+                    random.shuffle(self.cards)
                 num_troops = self.current_card_troop_exchange
                 self.current_card_troop_exchange += 4
                 return num_troops
@@ -121,8 +122,10 @@ class Game:
 
     def reinforce(self, player):
         troops_to_reinforce = self.exchange_cards_for_troops(player)
-        if troops_to_reinforce:
-            print(f"{player.name} exchanged cards for {troops_to_reinforce} troops.")
+        if not troops_to_reinforce:
+            return
+        
+        print(f"{player.name} exchanged cards for {troops_to_reinforce} troops.")
 
         # Placing troops on owned territories
         print(f"\n--- {player.name}'s Reinforcement Phase ---")
@@ -131,7 +134,19 @@ class Game:
 
     def start_round(self, player):
         player.round_base_placement(3)
-        self.reinforce(player)
+
+        while True:
+            try:
+                bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes")
+                if bool_reinforce == '1':
+                    self.reinforce(player)
+                    break
+                elif bool_reinforce == '0':
+                    break
+                else:
+                    raise ValueError
+            except ValueError:
+                print("\nTry again")
 
     def attack_phase(self, player):
         # Assuming a manual attack; you can add more sophisticated game mechanics later
@@ -140,26 +155,26 @@ class Game:
                                                 f"\n{player.name}, choose a territory to attack from (0 to cancel): ",
                                                 allow_zero=True)
         if attacker_territory == 0:
-            return
+            return False
         attacker_territory = next((t for t in self.board if t.name == attacker_territory.name and t.owner.name == player.name), None)
 
         if not attacker_territory:
             print("\nInvalid territory selection. Try again.")
-            return
+            return False
 
         defender_territory = territory_selector(attacker_territory.neighbors,
                                                 "\nLinked territories:",
                                                 f"\n{player.name}, choose a territory to attack (0 to cancel): ",
                                                 allow_zero=True)
         if defender_territory == 0:
-            return
+            return False
         defender_territory = next((t for t in self.board if t.name == defender_territory.name and t in attacker_territory.neighbors), None)
 
         if not defender_territory:
             print("Invalid target territory selection. Try again.")
-            return
+            return False
 
-        self.attack(attacker_territory, defender_territory)
+        return self.attack(attacker_territory, defender_territory)
 
     def play(self):
         current_player_index = 0
@@ -170,14 +185,21 @@ class Game:
             print(f"\n--- {current_player.name}'s Turn ---")
             self.display_board()
             
+            success = False
             finished_attacking = 0
             while not finished_attacking:
-                self.attack_phase(current_player)
+                success = self.attack_phase(current_player) or success
                 try:
                     finished_attacking = int(input("\nDo you wish to stop attacking? 0=no, 1=yes\n"))
                 except ValueError:
                     print('Invalid Selection, assuming True')
                     finished_attacking = 1
+
+            # Give cards if one capture is done
+            if success:
+                print("Card drawn")
+                current_player.cards.append(self.draw_card())
+            
 
             # Check if the game is over
             # TODO: implement the winning condition cards
