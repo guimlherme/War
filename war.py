@@ -184,8 +184,8 @@ class Game:
 if __name__ == "__main__":
     players = []
     while True:
-        player_name = input("Enter Player's name (or type 0 to start the game): ")
-        if player_name == '0':
+        player_name = input("Enter Player's name (or leave blank to start the game): ")
+        if not player_name:
             break
         players.append(player_name)
     
