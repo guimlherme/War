@@ -15,9 +15,10 @@ State structure:
 Action structure:
 [
     1 x action: {
-        0 = pass
+        -1 = pass
+        country_index: int
     }
-    1 x country: int
+    
 ]
 Attacks will run until conquered or can't proceed. Transfers will happen with all troops.
 """

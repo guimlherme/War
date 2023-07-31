@@ -1,0 +1,8 @@
+from game.territories import territories_data
+
+territory_ids = range(len(territories_data))  # List of territory identifiers
+
+# Define the action space
+action_space = []
+action_space += [-1] # finish phase
+action_space += list(territory_ids)
