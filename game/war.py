@@ -1,20 +1,51 @@
 import os
 import random
-from players import Player
-from territories import Territory, TerritoryCard, territories_data, verify_conquered_continents, continent_to_troops
-from utils import selector
-from win_conditions import check_win, objectives, objectives_descriptions
+from game.players.human_player import HumanPlayer
+
+from game.territories import Territory, TerritoryCard, territories_data, verify_conquered_continents, continent_to_troops
+from game.utils import human_selector, debug_print
+from game.win_conditions import check_win, simple_check_win, objectives, objectives_descriptions
 import numpy as np
+
 
 def roll_dice():
     return random.randint(1, 6)
 
 class Game:
-    def __init__(self, players):
-        self.players = players
-        self.current_card_troop_exchange = 4
+    def __init__(self, num_players, debug=True, objectives_enabled=True):
+        self.debug = debug
+        self.objectives_enables = objectives_enabled
+        self.num_players = num_players
+        self.players = self.setup_players()
         self.board = self.setup_board()
         self.cards = self.setup_territory_cards()
+        self.current_card_troop_exchange = 4
+
+    def setup_players(self):
+        players = []
+        colors = ['Azul', 'Amarelo', 'Vermelho', 'Cinza', 'Roxo', 'Verde']
+        print(self.num_players)
+        assert (self.num_players <= 6)
+        objectives_list = objectives.copy()
+        if self.debug:
+            for _ in range(self.num_players):
+                player_name = input("\nEnter Player's name (or leave blank to start the game): ")
+                if not player_name:
+                    break
+                color = human_selector(colors, "\nCores disponíveis:","\nSelecione uma cor para o jogador:", False)
+                colors.remove(color)
+                objective = random.choice(objectives_list)
+                objectives_list.remove(objective)
+                input("\nPress enter to see your objective\n")
+                debug_print(objectives_descriptions[objective])
+                input("\nPress enter to hide your objective\n")
+                os.system('cls' if os.name == 'nt' else 'clear')
+                players.append(HumanPlayer(player_name, color, objective))
+        else:
+            for i in range(self.num_players):
+                player_name = f"ai_{i}"
+                color = random.choice(colors)
+
 
     def setup_board(self):
 
@@ -38,7 +69,7 @@ class Game:
 
     def display_board(self):
         for territory in self.board:
-            print(territory)
+            debug_print(territory)
 
     def conquer_territory(self, attacker, defender):
         defender.owner.remove_territory(defender)
@@ -52,7 +83,7 @@ class Game:
 
         # Guarantee that at least 1 troop remains in each territory
         transfered_troops = max(1, attacker.troops - transfered_troops)
-        print(f"\nTransfered troops:{transfered_troops}")
+        debug_print(f"\nTransfered troops:{transfered_troops}")
 
         defender.troops = transfered_troops
         attacker.troops = attacker.troops - transfered_troops
@@ -65,8 +96,8 @@ class Game:
         attacker_dice.sort(reverse=True)
         defender_dice.sort(reverse=True)
 
-        print(f"{attacker.owner} rolled: {attacker_dice}")
-        print(f"{defender.owner} rolled: {defender_dice}")
+        debug_print(f"{attacker.owner} rolled: {attacker_dice}")
+        debug_print(f"{defender.owner} rolled: {defender_dice}")
 
         # Compare the dice rolls to decide the battle result
         while attacker_dice and defender_dice:
@@ -79,10 +110,10 @@ class Game:
 
         if defender.troops <= 0:
             self.conquer_territory(attacker, defender)
-            print(f"{attacker.name} won the battle and conquered {defender.name}!")
+            debug_print(f"{attacker.name} won the battle and conquered {defender.name}!")
             return True
         else:
-            print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
+            debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
             return False
 
     def get_player_by_name(self, name):
@@ -90,7 +121,7 @@ class Game:
             if player.name == name:
                 return player
         return None
-    
+
     # Card methods
 
     def draw_card(self):
@@ -121,25 +152,27 @@ class Game:
         if not troops_to_reinforce:
             return
         
-        print(f"{player.name} exchanged cards for {troops_to_reinforce} troops.")
+        debug_print(f"{player.name} exchanged cards for {troops_to_reinforce} troops.")
 
         # Placing troops on owned territories
-        print(f"\n--- {player.name}'s Reinforcement Phase ---")
+        debug_print(f"\n--- {player.name}'s Reinforcement Phase ---")
         player.place_troops(troops_to_reinforce)
 
 
     def start_round(self, player):
-        player.round_base_placement(3)
+        player.round_base_placement(len(player.territories) // 2)
 
         conquered_continents = verify_conquered_continents(player)
         if conquered_continents:
             for continent in conquered_continents:
-                print("\nYou have a bonus for conquering an entire continent")
+                debug_print("\nYou have a bonus for conquering an entire continent")
                 troops_to_add = continent_to_troops(continent)
                 player.place_troops(troops_to_add, continent)
 
-
         while True:
+            if not player.is_human:
+                self.reinforce(player)
+                break
             try:
                 bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes ")
                 if bool_reinforce == '1':
@@ -150,11 +183,11 @@ class Game:
                 else:
                     raise ValueError
             except ValueError:
-                print("\nTry again")
+                debug_print("\nTry again")
 
     def attack_phase(self, player):
         # Assuming a manual attack; you can add more sophisticated game mechanics later
-        attacker_territory = selector(player.territories,
+        attacker_territory = human_selector(player.territories,
                                                 "\nYour territories:",
                                                 f"\n{player.name}, choose a territory to attack from (0 to cancel): ",
                                                 allow_zero=True)
@@ -163,10 +196,10 @@ class Game:
         attacker_territory = next((t for t in self.board if t == attacker_territory and t.owner == player), None)
 
         if not attacker_territory:
-            print("\nInvalid territory selection. Try again.")
+            debug_print("\nInvalid territory selection. Try again.")
             return False
 
-        defender_territory = selector([t for t in attacker_territory.neighbors if t.owner != player],
+        defender_territory = human_selector([t for t in attacker_territory.neighbors if t.owner != player],
                                                 "\nLinked territories:",
                                                 f"\n{player.name}, choose a territory to attack (0 to cancel): ",
                                                 allow_zero=True)
@@ -175,7 +208,7 @@ class Game:
         defender_territory = next((t for t in self.board if t == defender_territory and t in attacker_territory.neighbors), None)
 
         if not defender_territory:
-            print("Invalid target territory selection. Try again.")
+            debug_print("Invalid target territory selection. Try again.")
             return False
 
         return self.attack(attacker_territory, defender_territory)
@@ -186,7 +219,7 @@ class Game:
             current_player = self.players[current_player_index]
             self.start_round(current_player)
 
-            print(f"\n--- {current_player.name}'s Turn ---")
+            debug_print(f"\n--- {current_player.name}'s Turn ---")
             self.display_board()
             
             success = False
@@ -196,41 +229,29 @@ class Game:
                 try:
                     finished_attacking = int(input("\nDo you wish to stop attacking? 0=no, 1=yes\n"))
                 except ValueError:
-                    print('Invalid Selection, assuming True')
+                    debug_print('Invalid Selection, assuming True')
                     finished_attacking = 1
 
             # Give cards if one capture is done
             if success:
-                print("Card drawn")
+                debug_print("Card drawn")
                 current_player.cards.append(self.draw_card())
             
 
             # Check if the game is over
-            if check_win(self.players):
-                print(f"\nCongratulations! {current_player.name} won the game!")
-                break
+            if self.objectives_enables:
+                if check_win(current_player, self.players):
+                    debug_print(f"\nCongratulations! {current_player.name} won the game!")
+                    break
+            else:
+                if simple_check_win(current_player, self.players):
+                    break
 
             # Switch to the other player for the next turn
             current_player_index = (current_player_index + 1) % len(self.players)
 
 
 if __name__ == "__main__":
-    players = []
-    colors = ['Azul', 'Amarelo', 'Vermelho', 'Cinza', 'Roxo', 'Verde']
-    objectives_list = objectives.copy()
-    while True:
-        player_name = input("\nEnter Player's name (or leave blank to start the game): ")
-        if not player_name:
-            break
-        color = selector(colors, "\nCores disponíveis:","\nSelecione uma cor para o jogador:", False)
-        colors.remove(color)
-        objective = random.choice(objectives_list)
-        objectives_list.remove(objective)
-        input("\nPress enter to see your objective\n")
-        print(objectives_descriptions[objective])
-        input("\nPress enter to hide your objective\n")
-        os.system('cls' if os.name == 'nt' else 'clear')
-        players.append(Player(player_name, color, objective))
-    
-    risk_game = Game(players)
+    num_players = int(input("Type in the number of players "))
+    risk_game = Game(debug=True, num_players=num_players)
     risk_game.play()

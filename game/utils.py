@@ -1,7 +1,5 @@
-
-
-def selector(territory_list, initial_phrase, selection_phrase, allow_zero):
-    if len(territory_list) == 0:
+def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
+    if len(choice_list) == 0:
         print("Empty possibility list")
         if allow_zero:
             return 0
@@ -11,7 +9,7 @@ def selector(territory_list, initial_phrase, selection_phrase, allow_zero):
     while True:
         print(initial_phrase)
 
-        for i, territory in enumerate(territory_list):
+        for i, territory in enumerate(choice_list):
             print(f"{i+1}. {territory}")
 
         try:
@@ -23,12 +21,19 @@ def selector(territory_list, initial_phrase, selection_phrase, allow_zero):
                 else:
                     raise ValueError
 
-            if choice < 0 or choice > len(territory_list):
+            if choice < 0 or choice > len(choice_list):
                 raise ValueError
 
-            selected_territory = territory_list[choice - 1]
+            selected_territory = choice_list[choice - 1]
 
             return selected_territory
 
         except (ValueError, IndexError):
             print("Invalid input. Please try again.")
+
+def ai_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
+    pass
+
+def debug_print(str, debug=True):
+    if debug:
+        print(str)

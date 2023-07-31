@@ -1,4 +1,4 @@
-from territories import north_america, south_america, africa, europe, asia, oceania
+from game.territories import north_america, south_america, africa, europe, asia, oceania
 
 # Conquistar na totalidade a EUROPA, a OCEANIA e mais um terceiro.
 def objective_one(player, colors):
@@ -93,7 +93,7 @@ def objective_thirteen(player, colors):
     if 'Roxo' not in colors or player.color == 'Roxo':
         return len(player.territories) >= 24
     
-    if len(colors['Roxo'].territories) == 0 and colors['Roxo'].alive == True:
+    if len(colors['Roxo'].territories) == 0:
         return True
 
 
@@ -101,7 +101,7 @@ def objective_fourteen(player, colors):
     if 'Verde' not in colors or player.color == 'Verde':
         return len(player.territories) >= 24
     
-    if len(colors['Verde'].territories) == 0 and colors['Verde'].alive == True:
+    if len(colors['Verde'].territories) == 0:
         return True
 
 
@@ -142,10 +142,22 @@ def check_win(current_player, players):
     colors = {}
     for player in players:
         colors[player.name] = player.color
-        # Mark player as dead if necessary
+        # Mark player as dead if necessary, after adding him to this turn's elimination list
         if len(player.territories) == 0:
             players.remove(player)
 
     if objectives[current_player.objective](current_player, colors):
+        return True
+    return False
+
+def simple_check_win(current_player, players):
+    colors = {}
+    for player in players:
+        colors[player.name] = player.color
+        # Mark player as dead if necessary
+        if len(player.territories) == 0:
+            players.remove(player)
+
+    if len(players) == 1:
         return True
     return False
