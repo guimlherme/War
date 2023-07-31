@@ -27,8 +27,7 @@ BAD_SELECTION_PENALTY = 0.5
 
 
 from game.players.player import Player
-from game.territories import territories_data
-from game.utils import ai_selector, debug_print
+from game.utils import debug_print
 
 import random
 
@@ -39,16 +38,16 @@ class AIPlayer(Player):
         self.action = None # Remember to reset this to None after using
 
     def get_action(self):
-        action = self.action
-        self.action = None
+        territory_index = self.action
+        self.territory_index = None
 
-        if action == None:
+        if territory_index == None:
             raise ValueError("Got a null action")
 
-        if action == -1:
+        if territory_index == -1:
             return None
         
-        territory = territories_data[action]
+        territory = self.board.territories_data[territory_index]
 
         return territory
 

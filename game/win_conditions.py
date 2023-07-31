@@ -1,27 +1,34 @@
-from game.territories import north_america, south_america, africa, europe, asia, oceania
-
-# Conquistar na totalidade a EUROPA, a OCEANIA e mais um terceiro.
-def objective_one(player, colors):
-    if (set(europe) < set(player.territories) and set(oceania) < set(player.territories)):
-        if (set(south_america) < set(player.territories) or set(north_america) < set(player.territories) or set(asia) < set(player.territories) or set(africa) < set(player.territories)):
+# Conquistar na totalidade a EUROPA, a board.continents["oceania"] e mais um terceiro.
+def objective_one(player, colors, board):
+    if (set(board.continents["europe"]) < set(player.territories) and 
+        set(board.continents["oceania"]) < set(player.territories)):
+        if (set(board.continents["south_america"]) < set(player.territories) or 
+            set(board.continents["north_america"]) < set(player.territories) or 
+            set(board.continents["asia"]) < set(player.territories) or 
+            set(board.continents["africa"]) < set(player.territories)):
             return True
     return False
 
 # Conquistar na totalidade a ÁSIA e a AMÉRICA DO SUL.
-def objective_two(player, colors):
-    if (set(south_america) < set(player.territories) and set(asia) < set(player.territories)):
+def objective_two(player, colors, board):
+    if (set(board.continents["south_america"]) < set(player.territories) and 
+        set(board.continents["asia"]) < set(player.territories)):
         return True
     return False
 
 # Conquistar na totalidade a EUROPA, a AMÉRICA DO SUL e mais um terceiro.
-def objective_three(player, colors):
-    if (set(europe) < set(player.territories) and set(south_america) < set(player.territories)):
-        if (set(oceania) < set(player.territories) or set(north_america) < set(player.territories) or set(asia) < set(player.territories) or set(africa) < set(player.territories)):
+def objective_three(player, colors, board):
+    if (set(board.continents["europe"]) < set(player.territories) and 
+        set(board.continents["south_america"]) < set(player.territories)):
+        if (set(board.continents["oceania"]) < set(player.territories) or 
+            set(board.continents["north_america"]) < set(player.territories) or 
+            set(board.continents["asia"]) < set(player.territories) or 
+            set(board.continents["africa"]) < set(player.territories)):
             return True
     return False
 
 # Conquistar 18 TERRITÓRIOS e ocupar cada um deles com pelo menos dois exércitos.
-def objective_four(player, colors):
+def objective_four(player, colors, board):
     if (len(player.territories) >= 18):
         territories_2 = 0
         for i in player.territories:
@@ -32,31 +39,33 @@ def objective_four(player, colors):
     return False
 
 # Conquistar na totalidade a ÁSIA e a ÁFRICA.
-def objective_five(player, colors):
-    if (set(asia) < set(player.territories) and set(africa) < set(player.territories)):
+def objective_five(player, colors, board):
+    if (set(board.continents["asia"]) < set(player.territories) and 
+        set(board.continents["africa"]) < set(player.territories)):
         return True
     return False
 
 # Conquistar na totalidade a AMÉRICA DO NORTE e a ÁFRICA.
-def objective_six(player, colors):
-    if (set(north_america) < set(player.territories) and set(africa) < set(player.territories)):
+def objective_six(player, colors, board):
+    if (set(board.continents["north_america"]) < set(player.territories) and 
+        set(board.continents["africa"]) < set(player.territories)):
         return True
     return False
 
 # Conquistar 24 TERRITÓRIOS à sua escolha.
-def objective_seven(player, colors):
+def objective_seven(player, colors, board):
     if (len(player.territories) >= 24):
         return True
     return False
 
-# Conquistar na totalidade a AMÉRICA DO NORTE e a OCEANIA.
-def objective_eight(player, colors):
-    if (set(north_america) < set(player.territories) and set(oceania) < set(player.territories)):
+# Conquistar na totalidade a AMÉRICA DO NORTE e a board.continents["oceania"].
+def objective_eight(player, colors, board):
+    if (set(board.continents["north_america"]) < set(player.territories) and set(board.continents["oceania"]) < set(player.territories)):
         return True
     return False
 
 
-def objective_nine(player, colors):
+def objective_nine(player, colors, board):
     if 'Azul' not in colors or player.color == 'Azul':
         return len(player.territories) >= 24
     
@@ -65,7 +74,7 @@ def objective_nine(player, colors):
 
 
 
-def objective_ten(player, colors):
+def objective_ten(player, colors, board):
     if 'Amarelo' not in colors or player.color == 'Amarelo':
         return len(player.territories) >= 24
     
@@ -73,7 +82,7 @@ def objective_ten(player, colors):
         return True
 
 
-def objective_eleven(player, colors):
+def objective_eleven(player, colors, board):
     if 'Vermelho' not in colors or player.color == 'Vermelho':
         return len(player.territories) >= 24
     
@@ -81,7 +90,7 @@ def objective_eleven(player, colors):
         return True
 
 
-def objective_twelve(player, colors):
+def objective_twelve(player, colors, board):
     if 'Cinza' not in colors or player.color == 'Cinza':
         return len(player.territories) >= 24
     
@@ -89,7 +98,7 @@ def objective_twelve(player, colors):
         return True
 
 
-def objective_thirteen(player, colors):
+def objective_thirteen(player, colors, board):
     if 'Roxo' not in colors or player.color == 'Roxo':
         return len(player.territories) >= 24
     
@@ -97,7 +106,7 @@ def objective_thirteen(player, colors):
         return True
 
 
-def objective_fourteen(player, colors):
+def objective_fourteen(player, colors, board):
     if 'Verde' not in colors or player.color == 'Verde':
         return len(player.territories) >= 24
     
@@ -121,14 +130,14 @@ objectives = [objective_one,
               objective_fourteen]
 
 objectives_descriptions = {
-    objective_one: 'Conquer all of EUROPE, OCEANIA, and another continent of your choice.',
-    objective_two: 'Conquer all of SOUTH AMERICA and ASIA.',
-    objective_three: 'Conquer all of EUROPE, SOUTH AMERICA, and another continent of your choice.',
+    objective_one: 'Conquer all of board.continents["europe"], board.continents["oceania"], and another continent of your choice.',
+    objective_two: 'Conquer all of SOUTH AMERICA and board.continents["asia"].',
+    objective_three: 'Conquer all of board.continents["europe"], SOUTH AMERICA, and another continent of your choice.',
     objective_four: 'Conquer 18 TERRITORIES and occupy each one with at least two armies.',
-    objective_five: 'Conquer all of ASIA and AFRICA.',
-    objective_six: 'Conquer all of NORTH AMERICA and AFRICA.',
+    objective_five: 'Conquer all of board.continents["asia"] and board.continents["africa"].',
+    objective_six: 'Conquer all of NORTH AMERICA and board.continents["africa"].',
     objective_seven: 'Conquer 24 TERRITORIES of your choice.',
-    objective_eight: 'Conquer all of NORTH AMERICA and OCEANIA.',
+    objective_eight: 'Conquer all of NORTH AMERICA and board.continents["oceania"].',
     objective_nine: 'Eliminate the BLUE player. If you are the BLUE player or the BLUE player does not exist or the BLUE player is eliminated by someone else, then your objective is to conquer 24 territories.',
     objective_ten: 'Eliminate the YELLOW player. If you are the YELLOW player or the YELLOW player does not exist or the YELLOW player is eliminated by someone else, then your objective is to conquer 24 territories.',
     objective_eleven: 'Eliminate the RED player. If you are the RED player or the RED player does not exist or the RED player is eliminated by someone else, then your objective is to conquer 24 territories.',
@@ -138,7 +147,7 @@ objectives_descriptions = {
 }
 
 
-def check_win(current_player, players):
+def check_win(current_player, players, board):
     colors = {}
     for player in players:
         # Add all players alive at the beggining of the round
@@ -148,11 +157,11 @@ def check_win(current_player, players):
         if len(player.territories) == 0:
             player.has_died = True
 
-    if current_player.objective(current_player, colors):
+    if current_player.objective(current_player, colors, board):
         return True
     return False
 
-def simple_check_win(current_player, players):
+def simple_check_win(current_player, players, board):
     alive_players = []
     for player in players:
         if not player.has_died:

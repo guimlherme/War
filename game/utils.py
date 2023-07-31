@@ -34,9 +34,6 @@ def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
         except (ValueError, IndexError):
             print("Invalid input. Please try again.")
 
-def ai_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
-    pass
-
 def debug_print(str, debug=False):
     if DEBUG_FLAG or debug:
         print(str)

@@ -5,6 +5,7 @@ class Player:
         self.name = name
         self.color = color
         self.objective = objective
+        self.board = None
         self.territories = []
         self.cards = []
         self.last_territory_len = 0
@@ -13,6 +14,9 @@ class Player:
         self.has_conquered = False
         self.has_won = False
         self.remaining_troops_to_place = 0
+
+    def set_board(self, board):
+        self.board = board
 
     def players_dict(self, player):
         # Attributes a number to each player based on this player's referential

@@ -5,7 +5,7 @@ from game.players.player import Player
 from game.players.human_player import HumanPlayer
 from game.players.ai_player import AIPlayer
 
-from game.territories import Territory, TerritoryCard, territories_data, verify_conquered_continents, continent_to_troops
+from game.territories import Board, Territory, TerritoryCard
 from game.utils import human_selector, debug_print
 from game.win_conditions import check_win, simple_check_win, objectives, objectives_descriptions
 import numpy as np
@@ -25,7 +25,7 @@ class Game:
         self.objectives_enabled: bool = objectives_enabled
         self.num_players: int = num_players
         self.players: List[Player] = self.setup_players()
-        self.board: List[Territory] = self.setup_board()
+        self.board: Board = self.setup_board()
         self.cards: List[TerritoryCard] = self.setup_territory_cards()
         self.current_card_troop_exchange: int = 4
         self.current_player_index: int = 0
@@ -61,9 +61,9 @@ class Game:
 
     def setup_board(self):
 
-        board = territories_data.copy()
+        board = Board()
 
-        territories = territories_data.copy()
+        territories = board.territories_data.copy()
 
         random.shuffle(territories)
         split_territories = np.array_split(territories, len(self.players))
@@ -72,12 +72,15 @@ class Game:
                 territory.owner = player
                 player.add_territory(territory)
         
+        for player in self.players:
+            player.set_board(board)
+
         return board
     
     def setup_territory_cards(self):
         # Create TerritoryCard objects for each country
         territory_cards = [TerritoryCard(territory.name, territory.shape) 
-                           for territory in territories_data]
+                           for territory in self.board]
         return territory_cards
 
     def display_board(self):
@@ -236,11 +239,11 @@ class Game:
     
     def start_round(self, player):
         debug_print(f"\n {player.name}'s turn:\n")
-        conquered_continents = verify_conquered_continents(player)
+        conquered_continents = self.board.verify_conquered_continents(player)
         if conquered_continents:
             for continent in conquered_continents:
                 debug_print("\nYou have a bonus for conquering an entire continent")
-                troops_to_add = continent_to_troops(continent)
+                troops_to_add = self.board.continent_to_troops(continent)
                 # TODO: Make AI control this, too
                 player.place_troops(troops_to_add, continent)
         
@@ -387,12 +390,12 @@ class Game:
 
                 # Check if the game is over
                 if self.objectives_enabled:
-                    if check_win(current_player, self.players):
+                    if check_win(current_player, self.players, self.board):
                         debug_print(f"\nCongratulations! {current_player.name} won the game!")
                         current_player.has_won = True
                         return [None, self.get_state(current_player)]
                 else:
-                    if simple_check_win(current_player, self.players):
+                    if simple_check_win(current_player, self.players, self.board):
                         current_player.has_won = True
                         return [None, self.get_state(current_player)]
 
@@ -410,8 +413,8 @@ class Game:
 
 if __name__ == "__main__":
     num_players = int(input("Type in the number of players "))
-    war_game = Game(debug=True, num_players=num_players)
+    war_game = Game(num_players=num_players, debug=True)
     while True:
         war_game.play_round()
         #next_player, state = war_game.play_round()
-        #war_game.play_action()
+        #war_game.set_ai_action(next_player, action)
