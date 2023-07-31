@@ -10,7 +10,7 @@ class HumanPlayer(Player):
 
     def place_troops(self, num_troops, countries = None):
         if not countries:
-            countries = self.territoriess
+            countries = self.territories
 
         print(f"{self.name}, place {num_troops} troops on your territories.")
         remaining_troops = num_troops
