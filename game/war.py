@@ -14,6 +14,8 @@ REINFORCE_PHASE = 0
 ATTACK_PHASE = 1
 TRANSFER_PHASE = 2
 
+MAX_ACTIONS_PER_ROUND = 30
+
 def roll_dice():
     return random.randint(1, 6)
 
@@ -28,6 +30,7 @@ class Game:
         self.current_card_troop_exchange: int = 4
         self.current_player_index: int = 0
         self.current_phase = REINFORCE_PHASE
+        self.action_counter = 0
 
     def setup_players(self):
         players = []
@@ -96,21 +99,36 @@ class Game:
             print("Something went wrong. Tried to calculate reward to a human")
             return 0
         
-        if player.has_died:
-            return 0
+        # Next lines are done in win_condition to facilitate checking
+        # if player.has_died:
+        #     return 0
 
         reward = -0.1 # Base reward is negative to prevent stalling
 
-        if player.won_first_attack:
-            reward += 3
-            player.won_first_attack = False
+        if player.has_conquered: # Prize for gaining a card
+            reward += 1
+            player.has_conquered = False
 
         if player.has_won:
             reward += 500
         
+        reward += player.reward_parcel
+        player.reward_parcel = 0
+        
+        #TODO: Maybe use len(player.territories) instead of this
         reward += player.calculate_territory_change()
 
         return reward
+
+    def set_ai_action(self, player_index, action):
+
+        player = self.players[player_index]
+
+        if player.is_human:
+            print("Something went wrong. Tried to set action of a human")
+            return 0
+        
+        player.action = action
 
     def conquer_territory(self, attacker, defender):
         defender.owner.remove_territory(defender)
@@ -128,6 +146,7 @@ class Game:
             transfered_troops = int(transfered_troops)
             transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
         else:
+            # TODO: let AI decide this
             transfered_troops = max_transferable_troops
 
         debug_print(f"\nTransfered troops:{transfered_troops}")
@@ -135,7 +154,18 @@ class Game:
         defender.troops = transfered_troops
         attacker.troops -= transfered_troops
 
-    def attack(self, attacker, defender):
+    def attack(self, attacker: Territory, defender: Territory):
+        """Performs the attack action
+
+        Args:
+            attacker (Territory): Territory that is attacking
+            defender (Territory): Terrtory that is defending
+
+        Returns:
+            The tuple (attack_success, continue_attacking)
+            attack_success indicates if the attack was successful, and
+            continue_attacking indicates if another attack prompt will be issued
+        """
         # Simulate dice rolls and determine the outcome of the battle
         attacker_dice = [roll_dice() for _ in range(min(attacker.troops - 1, 3))]
         defender_dice = [roll_dice() for _ in range(min(defender.troops, 3))]
@@ -197,28 +227,29 @@ class Game:
     def reinforce(self, player):
         troops_to_reinforce = self.exchange_cards_for_troops(player)
         if not troops_to_reinforce:
-            return
+            return 0
         
         debug_print(f"{player.name} exchanged cards for {troops_to_reinforce} troops.")
 
-        # Placing troops on owned territories
-        debug_print(f"\n--- {player.name}'s Reinforcement Phase ---")
-        player.place_troops(troops_to_reinforce)
+        return troops_to_reinforce
 
-
+    
     def start_round(self, player):
-        player.round_base_placement(len(player.territories) // 2)
-
+        debug_print(f"\n {player.name}'s turn:\n")
         conquered_continents = verify_conquered_continents(player)
         if conquered_continents:
             for continent in conquered_continents:
                 debug_print("\nYou have a bonus for conquering an entire continent")
                 troops_to_add = continent_to_troops(continent)
+                # TODO: Make AI control this, too
                 player.place_troops(troops_to_add, continent)
+        
+        round_base_placement = len(player.territories) // 2
 
+        reinforce_num_troops = 0
         while True:
             if not player.is_human:
-                self.reinforce(player)
+                reinforce_num_troops = self.reinforce(player)
                 break
             try:
                 bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes ")
@@ -231,15 +262,30 @@ class Game:
                     raise ValueError
             except ValueError:
                 debug_print("\nTry again")
+        
+        player.remaining_troops_to_place = round_base_placement + reinforce_num_troops
 
-    def attack_phase(self, player):
+
+    def reinforcement_phase(self, player):
+        player.place_troops(player.remaining_troops_to_place)
+        return player.remaining_troops_to_place
+
+    def attack_phase(self, player: Player):
+        """Starts the attack phase
+
+        Args:
+            player (Player): player that will be attacking
+
+        Returns:
+            The tuple (attack_success, continue_attacking)
+            attack_success indicates if the attack was successful, and
+            continue_attacking indicates if another attack prompt will be issued
+        """
         
         attack_intention = player.prepare_attack(self.board)
         
-        if not attack_intention[0]:
-            if not attack_intention[1]:
-                return False, False
-            return False, True
+        if isinstance(attack_intention[0], bool):
+            return attack_intention
         
         attacker_territory, defender_territory = attack_intention
 
@@ -263,7 +309,7 @@ class Game:
         if giver_territory.owner != player or receiver_territory.owner != player:
             return True
 
-        self.transfer_troops(giver_territory, receiver_territory)
+        return self.transfer_troops(giver_territory, receiver_territory)
 
     def transfer_troops(self, giver_territory, receiver_territory):
 
@@ -275,7 +321,7 @@ class Game:
             transfered_troops = int(transfered_troops)
             transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
         else:
-            transfered_troops = max_transferable_troops
+            transfered_troops = 1
 
         debug_print(f"\nTransfered troops:{transfered_troops}")
 
@@ -283,19 +329,36 @@ class Game:
         giver_territory.troops -= transfered_troops
         return True
 
+    def change_player(self):
+        self.current_player_index = (self.current_player_index + 1) % len(self.players)
+        current_player = self.players[self.current_player_index]
+        # Make sure that next player is alive
+        while current_player.has_died:
+            self.current_player_index = (self.current_player_index + 1) % len(self.players)
+            current_player = self.players[self.current_player_index]
+
+
     def play_round(self):
         current_player = self.players[self.current_player_index]
+        if self.action_counter >= MAX_ACTIONS_PER_ROUND:
+            self.change_player()
+            return [self.current_player_index, self.get_state(current_player)]
+        self.action_counter += 1
 
         if self.current_phase == REINFORCE_PHASE:
-            self.start_round(current_player)
+            if current_player.remaining_troops_to_place == 0:
+                self.start_round(current_player)
+            remaining_troops_to_place = self.reinforcement_phase(current_player)
 
-            debug_print(f"\n--- {current_player.name}'s Turn ---")
-            self.display_board()
+            if remaining_troops_to_place == 0:
+                debug_print(f"\n--- {current_player.name}'s Turn ---")
+                if self.debug:
+                    self.display_board()
 
-            self.current_attack_success = False
-            self.current_phase = ATTACK_PHASE
+                self.current_phase = ATTACK_PHASE
+                self.current_attack_success = False
 
-            return
+            return [self.current_player_index, self.get_state(current_player)]
         
         if self.current_phase == ATTACK_PHASE:
 
@@ -335,8 +398,10 @@ class Game:
 
                 # Do the reward counting updates
 
+                self.action_counter = 0
                 self.current_phase = REINFORCE_PHASE
-                self.current_player_index = (self.current_player_index + 1) % len(self.players)
+
+                self.change_player()
 
             return [self.current_player_index, self.get_state(current_player)]
 

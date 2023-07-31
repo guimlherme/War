@@ -8,9 +8,11 @@ class Player:
         self.territories = []
         self.cards = []
         self.last_territory_len = 0
+        self.reward_parcel = 0
         self.has_died = False
         self.has_conquered = False
         self.has_won = False
+        self.remaining_troops_to_place = 0
 
     def players_dict(self, player):
         # Attributes a number to each player based on this player's referential
@@ -44,6 +46,4 @@ class Player:
     def place_troops(*args):
         # Should be implemented in child classes
         raise NotImplementedError
-
-    def round_base_placement(self, num_troops):
-        self.place_troops(num_troops)
+    

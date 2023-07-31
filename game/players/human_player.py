@@ -11,22 +11,19 @@ class HumanPlayer(Player):
     def get_state():
         return None
 
-    def place_troops(self, num_troops, countries = None):
+    def place_troops(self, troops_to_place, countries = None):
         if not countries:
             countries = self.territories
 
-        print(f"{self.name}, place {num_troops} troops on your territories.")
-        remaining_troops = num_troops
+        print(f"{self.name}, place {troops_to_place} troops on your territories.")
+        remaining_troops = troops_to_place
 
         while remaining_troops > 0:
 
             selected_territory = human_selector(countries,
-                                          "\nYour territories:",
-                                          "\nEnter the number of the territory to put troops on (0 to finish): ",
-                                          allow_zero=True)
-            
-            if selected_territory == 0:
-                break
+                                          f"\nRemaining troops:{remaining_troops}\nYour territories:",
+                                          "\nEnter the number of the territory to put troops on: ",
+                                          allow_zero=False)
 
             troops_to_place = int(input(f"How many troops to place on {selected_territory.name}? "))
 
@@ -36,6 +33,8 @@ class HumanPlayer(Player):
             else:
                 selected_territory.troops += remaining_troops
                 remaining_troops -= remaining_troops
+        self.remaining_troops_to_place = 0
+        return
 
     def prepare_attack(self, board):
         # Assuming a manual attack; you can add more sophisticated game mechanics later

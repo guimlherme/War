@@ -141,23 +141,27 @@ objectives_descriptions = {
 def check_win(current_player, players):
     colors = {}
     for player in players:
-        colors[player.name] = player.color
+        # Add all players alive at the beggining of the round
+        if not player.has_died:
+            colors[player.name] = player.color
         # Mark player as dead if necessary, after adding him to this turn's elimination list
         if len(player.territories) == 0:
-            players.remove(player)
+            player.has_died = True
 
     if current_player.objective(current_player, colors):
         return True
     return False
 
 def simple_check_win(current_player, players):
-    colors = {}
+    alive_players = []
     for player in players:
-        colors[player.name] = player.color
+        if not player.has_died:
+            alive_players.append(player)
         # Mark player as dead if necessary
         if len(player.territories) == 0:
-            players.remove(player)
+            player.has_died = True
+        
 
-    if len(players) == 1:
+    if len(alive_players) == 1:
         return True
     return False
