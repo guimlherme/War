@@ -18,7 +18,7 @@ def roll_dice():
 class Game:
     def __init__(self, num_players, debug=True, objectives_enabled=True):
         self.debug = debug
-        self.objectives_enables = objectives_enabled
+        self.objectives_enabled = objectives_enabled
         self.num_players = num_players
         self.players = self.setup_players()
         self.board = self.setup_board()
@@ -295,7 +295,7 @@ class Game:
             if not continue_transfering:
 
                 # Check if the game is over
-                if self.objectives_enables:
+                if self.objectives_enabled:
                     if check_win(current_player, self.players):
                         debug_print(f"\nCongratulations! {current_player.name} won the game!")
                         return
