@@ -86,9 +86,14 @@ class Game:
 
         defender.owner = attacker.owner
 
-        transfered_troops = input(f"\n{attacker.owner.name}, choose a number of troops to transfer (between 1 and {attacker.troops - 1}): ")
-        transfered_troops = int(transfered_troops)
-        transfered_troops = min(max(1, transfered_troops), 3)
+        max_transferable_troops = min(attacker.troops - 1, 3)
+
+        if attacker.owner.is_human:
+            transfered_troops = input(f"\n{attacker.owner.name}, choose a number of troops to transfer (between 1 and {max_transferable_troops}): ")
+            transfered_troops = int(transfered_troops)
+            transfered_troops = max(min(1, transfered_troops), max_transferable_troops)
+        else:
+            transfered_troops = max_transferable_troops
 
         # Guarantee that at least 1 troop remains in each territory
         transfered_troops = max(1, attacker.troops - transfered_troops)
@@ -105,8 +110,8 @@ class Game:
         attacker_dice.sort(reverse=True)
         defender_dice.sort(reverse=True)
 
-        debug_print(f"{attacker.owner} rolled: {attacker_dice}")
-        debug_print(f"{defender.owner} rolled: {defender_dice}")
+        debug_print(f"{attacker.owner.name} rolled: {attacker_dice}")
+        debug_print(f"{defender.owner.name} rolled: {defender_dice}")
 
         # Compare the dice rolls to decide the battle result
         while attacker_dice and defender_dice:
