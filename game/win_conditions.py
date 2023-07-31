@@ -146,7 +146,7 @@ def check_win(current_player, players):
         if len(player.territories) == 0:
             players.remove(player)
 
-    if objectives[current_player.objective](current_player, colors):
+    if current_player.objective(current_player, colors):
         return True
     return False
 

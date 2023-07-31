@@ -1,3 +1,6 @@
+
+DEBUG_FLAG = True
+
 def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
     if len(choice_list) == 0:
         print("Empty possibility list")
@@ -34,6 +37,6 @@ def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
 def ai_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
     pass
 
-def debug_print(str, debug=True):
-    if debug:
+def debug_print(str, debug=False):
+    if DEBUG_FLAG or debug:
         print(str)

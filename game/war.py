@@ -1,5 +1,7 @@
 import os
 import random
+from typing import List
+from game.players.player import Player
 from game.players.human_player import HumanPlayer
 from game.players.ai_player import AIPlayer
 
@@ -16,15 +18,15 @@ def roll_dice():
     return random.randint(1, 6)
 
 class Game:
-    def __init__(self, num_players, debug=True, objectives_enabled=True):
-        self.debug = debug
-        self.objectives_enabled = objectives_enabled
-        self.num_players = num_players
-        self.players = self.setup_players()
-        self.board = self.setup_board()
-        self.cards = self.setup_territory_cards()
-        self.current_card_troop_exchange = 4
-        self.current_player_index = 0
+    def __init__(self, num_players: int, debug:bool=True, objectives_enabled:bool=True):
+        self.debug: bool = debug
+        self.objectives_enabled: bool = objectives_enabled
+        self.num_players: int = num_players
+        self.players: List[Player] = self.setup_players()
+        self.board: List[Territory] = self.setup_board()
+        self.cards: List[TerritoryCard] = self.setup_territory_cards()
+        self.current_card_troop_exchange: int = 4
+        self.current_player_index: int = 0
         self.current_phase = REINFORCE_PHASE
 
     def setup_players(self):
@@ -54,7 +56,6 @@ class Game:
         return players
         
 
-
     def setup_board(self):
 
         board = territories_data.copy()
@@ -80,9 +81,43 @@ class Game:
         for territory in self.board:
             debug_print(territory)
 
+    def get_state(self, player):
+        state = []
+        state.append(self.current_phase)
+        for territory in self.board:
+            state.append(player.players_dict(territory.owner))
+            state.append(territory.troops)
+        return state
+    
+    def get_last_reward(self, player_index):
+        player = self.players[player_index]
+
+        if player.is_human:
+            print("Something went wrong. Tried to calculate reward to a human")
+            return 0
+        
+        if player.has_died:
+            return 0
+
+        reward = -0.1 # Base reward is negative to prevent stalling
+
+        if player.won_first_attack:
+            reward += 3
+            player.won_first_attack = False
+
+        if player.has_won:
+            reward += 500
+        
+        reward += player.calculate_territory_change()
+
+        return reward
+
     def conquer_territory(self, attacker, defender):
         defender.owner.remove_territory(defender)
         attacker.owner.add_territory(defender)
+
+        if len(defender.owner.territories) == 0:
+            defender.owner.has_died = True
 
         defender.owner = attacker.owner
 
@@ -91,16 +126,14 @@ class Game:
         if attacker.owner.is_human:
             transfered_troops = input(f"\n{attacker.owner.name}, choose a number of troops to transfer (between 1 and {max_transferable_troops}): ")
             transfered_troops = int(transfered_troops)
-            transfered_troops = max(min(1, transfered_troops), max_transferable_troops)
+            transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
         else:
             transfered_troops = max_transferable_troops
 
-        # Guarantee that at least 1 troop remains in each territory
-        transfered_troops = max(1, attacker.troops - transfered_troops)
         debug_print(f"\nTransfered troops:{transfered_troops}")
 
         defender.troops = transfered_troops
-        attacker.troops = attacker.troops - transfered_troops
+        attacker.troops -= transfered_troops
 
     def attack(self, attacker, defender):
         # Simulate dice rolls and determine the outcome of the battle
@@ -125,10 +158,10 @@ class Game:
         if defender.troops <= 0:
             self.conquer_territory(attacker, defender)
             debug_print(f"{attacker.name} won the battle and conquered {defender.name}!")
-            return True
+            return True, True
         else:
             debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
-            return False
+            return False, True
 
     def get_player_by_name(self, name):
         for player in self.players:
@@ -200,58 +233,55 @@ class Game:
                 debug_print("\nTry again")
 
     def attack_phase(self, player):
-        # Assuming a manual attack; you can add more sophisticated game mechanics later
-        attacker_territory = human_selector(player.territories,
-                                            "\nYour territories:",
-                                            f"\n{player.name}, choose a territory to attack from (0 to cancel): ",
-                                            allow_zero=True)
-        if attacker_territory == 0:
-            return False
-        attacker_territory = next((t for t in self.board if t == attacker_territory and t.owner == player), None)
+        
+        attack_intention = player.prepare_attack(self.board)
+        
+        if not attack_intention[0]:
+            if not attack_intention[1]:
+                return False, False
+            return False, True
+        
+        attacker_territory, defender_territory = attack_intention
 
-        if not attacker_territory:
-            debug_print("\nInvalid territory selection. Try again.")
-            return False
-
-        defender_territory = human_selector([t for t in attacker_territory.neighbors if t.owner != player],
-                                            "\nLinked territories:",
-                                            f"\n{player.name}, choose a territory to attack (0 to cancel): ",
-                                            allow_zero=True)
-        if defender_territory == 0:
-            return False
-        defender_territory = next((t for t in self.board if t == defender_territory and t in attacker_territory.neighbors), None)
-
-        if not defender_territory:
-            debug_print("Invalid target territory selection. Try again.")
-            return False
+        # Sanity check
+        if attacker_territory.owner != player or defender_territory.owner == player:
+            return False, True
 
         return self.attack(attacker_territory, defender_territory)
 
     def transfer_phase(self, player):
-        # Assuming a manual attack; you can add more sophisticated game mechanics later
-        giver_territory = human_selector(player.territories,
-                                            "\nYour territories:",
-                                            f"\n{player.name}, choose a territory to transfer from (0 to cancel): ",
-                                            allow_zero=True)
-        if giver_territory == 0:
-            return False
-        giver_territory = next((t for t in self.board if t == giver_territory and t.owner == player), None)
+        
+        transfer_intention = player.prepare_transfer(self.board)
 
-        receiver_territory = human_selector([t for t in giver_territory.neighbors if t.owner == player],
-                                            "\nLinked territories:",
-                                            f"\n{player.name}, choose a territory to transfer to (0 to cancel): ",
-                                            allow_zero=True)
-        if receiver_territory == 0:
-            return False
-        receiver_territory = next((t for t in self.board if t == receiver_territory and t in giver_territory.neighbors), None)
+        if isinstance(transfer_intention, bool):
+            # Continue transfering or not
+            return transfer_intention
+        
+        giver_territory, receiver_territory = transfer_intention
 
-        if not receiver_territory:
-            debug_print("Invalid target territory selection. Try again.")
-            return False
+        # Sanity check
+        if giver_territory.owner != player or receiver_territory.owner != player:
+            return True
 
-        return self.transfer_troops(receiver_territory, receiver_territory)
+        self.transfer_troops(giver_territory, receiver_territory)
 
+    def transfer_troops(self, giver_territory, receiver_territory):
 
+        # TODO: implement a rule such that the same troop can't be transfered twice in the same turn
+        max_transferable_troops = giver_territory.troops - 1
+
+        if giver_territory.owner.is_human:
+            transfered_troops = input(f"\n{giver_territory.owner.name}, choose a number of troops to transfer (between 1 and {max_transferable_troops}): ")
+            transfered_troops = int(transfered_troops)
+            transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
+        else:
+            transfered_troops = max_transferable_troops
+
+        debug_print(f"\nTransfered troops:{transfered_troops}")
+
+        receiver_territory.troops += transfered_troops
+        giver_territory.troops -= transfered_troops
+        return True
 
     def play_round(self):
         current_player = self.players[self.current_player_index]
@@ -269,13 +299,12 @@ class Game:
         
         if self.current_phase == ATTACK_PHASE:
 
-            self.current_attack_success = self.attack_phase(current_player) or self.current_attack_success
+            attack_success, continue_attacking = self.attack_phase(current_player)
 
-            try:
-                continue_attacking = int(input("\nDo you wish to continue attacking? 0=no, 1=yes\n"))
-            except ValueError:
-                debug_print('Invalid Selection, assuming False')
-                continue_attacking = 0
+            if attack_success and not self.current_attack_success:
+                # This is to make sure that the reward is immediate
+                current_player.has_conquered = True
+                self.current_attack_success = True
 
             if not continue_attacking:
                 # Give cards if one capture is done
@@ -285,17 +314,11 @@ class Game:
                 
                 self.current_phase = TRANSFER_PHASE
             
-            return
+            return [self.current_player_index, self.get_state(current_player)]
         
         if self.current_phase == TRANSFER_PHASE:
 
-            self.transfer_phase(current_player)
-
-            try:
-                continue_transfering = int(input("\nDo you wish to continue transfering? 0=no, 1=yes\n"))
-            except ValueError:
-                debug_print('Invalid Selection, assuming False')
-                continue_transfering = 0
+            continue_transfering = self.transfer_phase(current_player)
 
             if not continue_transfering:
 
@@ -303,16 +326,19 @@ class Game:
                 if self.objectives_enabled:
                     if check_win(current_player, self.players):
                         debug_print(f"\nCongratulations! {current_player.name} won the game!")
-                        return
+                        current_player.has_won = True
+                        return [None, self.get_state(current_player)]
                 else:
                     if simple_check_win(current_player, self.players):
-                        return
+                        current_player.has_won = True
+                        return [None, self.get_state(current_player)]
+
+                # Do the reward counting updates
 
                 self.current_phase = REINFORCE_PHASE
                 self.current_player_index = (self.current_player_index + 1) % len(self.players)
 
-            return
-            # return [self.current_player_index, state]
+            return [self.current_player_index, self.get_state(current_player)]
 
         
 
@@ -322,5 +348,5 @@ if __name__ == "__main__":
     war_game = Game(debug=True, num_players=num_players)
     while True:
         war_game.play_round()
-        #current_player, state = war_game.play_round()
+        #next_player, state = war_game.play_round()
         #war_game.play_action()

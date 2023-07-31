@@ -7,6 +7,23 @@ class Player:
         self.objective = objective
         self.territories = []
         self.cards = []
+        self.last_territory_len = 0
+        self.has_died = False
+        self.has_conquered = False
+        self.has_won = False
+
+    def players_dict(self, player):
+        # Attributes a number to each player based on this player's referential
+        # For now, it's only 0=me, 1=others
+        return 0 if player==self else 1
+    
+    def calculate_territory_change(self):
+        if self.last_territory_len == 0:
+            self.last_territory_len = len(self.territories)
+            return 0
+        change = len(self.territories) - self.last_territory_len
+        self.last_territory_len = len(self.territories)
+        return change
 
     def get_card_types(self):
         return [card.get_card_type() for card in self.cards]
