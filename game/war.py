@@ -268,7 +268,7 @@ class Game:
 
         if exchange_successful:
             num_troops = self.current_card_troop_exchange
-            self.current_card_troop_exchange += 4
+            self.current_card_troop_exchange += 2
             return num_troops     
 
         return 0
