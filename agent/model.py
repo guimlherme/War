@@ -14,8 +14,8 @@ from agent.logger import CustomLogger
 
 # Set constants
 INTERMEDIATE_LAYER_SIZE = 128
-BATCH_SIZE = 32
-GAMMA = 0.99
+BATCH_SIZE = 64
+GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
 EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 0.995
@@ -72,7 +72,7 @@ class AIPlayer:
         self.replay_buffer = ReplayBuffer(MEMORY_CAPACITY)
         self.mse_loss = nn.MSELoss()
         
-def dqn_learning(env, player1 = AIPlayer(name='ai1'), player2 = AIPlayer(name='ai2')):
+def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='ai1')):
 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
@@ -98,10 +98,13 @@ def dqn_learning(env, player1 = AIPlayer(name='ai1'), player2 = AIPlayer(name='a
                 action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action_space[action])
+
             if next_player_index == None:
                 done = True
-            
-            next_player = player1 if next_player_index == 0 else player2
+                next_player = current_player
+            else:
+                next_player = player1 if next_player_index == 0 else player2
+
             next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
             reward = next_player_reward
             
@@ -150,6 +153,8 @@ def dqn_learning(env, player1 = AIPlayer(name='ai1'), player2 = AIPlayer(name='a
 
         total_reward_msg = f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}"
         logger.info(total_reward_msg)
+
+        print(state)
 
         # Save the DQN models after some episodes
         if episode % SAVE_MODEL_FREQUENCY == 0:

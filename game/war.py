@@ -15,7 +15,12 @@ ATTACK_PHASE = 1
 TRANSFER_PHASE = 2
 
 MAX_ACTIONS_PER_ROUND = 30
-MAX_ACTIONS_PER_MATCH = 1500
+MAX_ACTIONS_PER_MATCH = 4200
+
+BASE_REWARD = -0.1 # Base reward is negative to prevent stalling
+CARD_REWARD = 15
+TERRITORIAL_CHANGE_FACTOR = 10
+VICTORY_REWARD = 500
 
 def roll_dice():
     return random.randint(1, 6)
@@ -129,20 +134,19 @@ class Game:
         # if player.has_died:
         #     return 0
 
-        reward = -0.01 # Base reward is negative to prevent stalling
+        reward = BASE_REWARD
 
         if player.has_conquered: # Prize for gaining a card
-            reward += 1
+            reward += CARD_REWARD
             player.has_conquered = False
 
         if player.has_won:
-            reward += 500
+            reward += VICTORY_REWARD
         
         reward += player.reward_parcel
         player.reward_parcel = 0
         
-        #TODO: Maybe use len(player.territories) instead of this
-        reward += player.calculate_territory_change()
+        reward += TERRITORIAL_CHANGE_FACTOR * player.calculate_territory_change()
 
         return reward
 

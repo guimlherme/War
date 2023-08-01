@@ -23,8 +23,7 @@ Action structure:
 Attacks will run until conquered or can't proceed. Transfers will happen with all troops.
 """
 
-BAD_SELECTION_PENALTY = 0.5
-
+BAD_SELECTION_PENALTY = -0.5
 
 from game.players.player import Player
 from game.utils import debug_print
@@ -65,14 +64,14 @@ class AIPlayer(Player):
         selected_territory = self.get_action()
 
         if selected_territory == None:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return
 
         num_troops = 1 # Place one by one
         remaining_troops = troops_to_place
 
         if selected_territory not in self.territories:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return
 
         if num_troops <= remaining_troops:
@@ -93,13 +92,13 @@ class AIPlayer(Player):
             return False, False
 
         if defender_territory.owner == self:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return False, True
 
         possible_attackers = [t for t in defender_territory.neighbors if t.owner == self and t.troops > 1]
 
         if len(possible_attackers) == 0:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return False, True
         
         attacker_territory = max(possible_attackers, key=lambda t: t.troops)
@@ -114,13 +113,13 @@ class AIPlayer(Player):
             return False
         
         if receiver_territory.owner != self:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return True
 
         possible_givers = [t for t in receiver_territory.neighbors if t.owner == self and t.troops > 1]
 
         if len(possible_givers) == 0:
-            self.reward_parcel -= BAD_SELECTION_PENALTY
+            self.reward_parcel += BAD_SELECTION_PENALTY
             return False
         
         giver_territory = min(possible_givers, key=lambda t: t.troops)
