@@ -1,11 +1,21 @@
 # War game (backend)
 
-This is an incomplete version of the 'War' game (brazilian version of Risk) to be used in my future projects, perhaps a RL agent.
+This is an semi-complete version of the 'War' game (brazilian version of Risk).
 
-How to play:
+A Deep Q-Learning agent was also implemented to train in this environment
 
+## How to play:
+
+```bash
 python -m game.war
+```
 
-Rules:
+## Rules:
 
 https://pt.scribd.com/doc/41739031/Manual-Original-Do-War
+
+## How to train the agent:
+
+```bash
+python -m agent.model
+```
