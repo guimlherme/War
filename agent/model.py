@@ -19,7 +19,7 @@ GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
 EPSILON_START = 1.0
 EPSILON_END = 0.01
 EPSILON_DECAY = 0.995
-TARGET_UPDATE_FREQUENCY = 10
+TARGET_UPDATE_FREQUENCY = 11 # Must be odd to save both models
 MEMORY_CAPACITY = 10000
 EPISODES = 1000
 SAVE_MODEL_FREQUENCY = 5
@@ -72,7 +72,7 @@ class AIPlayer:
         self.replay_buffer = ReplayBuffer(MEMORY_CAPACITY)
         self.mse_loss = nn.MSELoss()
         
-def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='ai1')):
+def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1')):
 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
@@ -85,9 +85,8 @@ def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='a
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         done = False
         total_reward = 0
-        current_training  = player1
-        # current_training = player1 if episode % 2 == 0 else player2 
-        current_player = player1
+        current_training = player0 if episode % 2 == 0 else player1 
+        current_player = player0
 
         while not done:
             # Epsilon-Greedy Exploration
@@ -103,12 +102,11 @@ def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='a
                 done = True
                 next_player = current_player
             else:
-                next_player = player1 if next_player_index == 0 else player2
+                next_player = player0 if next_player_index == 0 else player1
 
             next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
             reward = next_player_reward
             
-
             # print(f"Action: phase: {state[0][0]}, player: {current_player}, target: {action_space[action]}, reward: {reward} ")
             # Add experience to the agent's replay buffer
             if next_player == current_training:
@@ -146,6 +144,7 @@ def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='a
 
             # Update Target Network
             if episode % TARGET_UPDATE_FREQUENCY == 0:
+                # TODO: update all networks
                 current_training.target_model.load_state_dict(current_training.dqn_model.state_dict())
 
         # Decay Epsilon
@@ -154,8 +153,6 @@ def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='a
         total_reward_msg = f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}"
         logger.info(total_reward_msg)
 
-        print(state)
-
         # Save the DQN models after some episodes
         if episode % SAVE_MODEL_FREQUENCY == 0:
             if not os.path.exists(model_checkpoint_folder):
@@ -163,11 +160,11 @@ def dqn_learning(env, player1 = AIPlayer(name='ai0'), player2 = AIPlayer(name='a
             
             # Save DQN Model 1
             model_checkpoint_path1 = os.path.join(model_checkpoint_folder, f"dqn_model1_episode_{episode}.pth")
-            torch.save(player1.dqn_model.state_dict(), model_checkpoint_path1)
+            torch.save(player0.dqn_model.state_dict(), model_checkpoint_path1)
 
             # Save DQN Model 2
             model_checkpoint_path2 = os.path.join(model_checkpoint_folder, f"dqn_model2_episode_{episode}.pth")
-            torch.save(player2.dqn_model.state_dict(), model_checkpoint_path2)
+            torch.save(player1.dqn_model.state_dict(), model_checkpoint_path2)
 
 
 if __name__ == "__main__":
