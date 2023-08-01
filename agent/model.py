@@ -168,7 +168,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
 
 
 if __name__ == "__main__":
-    # Assuming you have already created the RiskEnvironment and num_actions is the total number of actions
+    # Instatiate WarEnvironment with 2 players
     env = WarEnvironment(2)
 
     dqn_learning(env)
