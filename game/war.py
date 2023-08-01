@@ -15,7 +15,7 @@ ATTACK_PHASE = 1
 TRANSFER_PHASE = 2
 
 MAX_ACTIONS_PER_ROUND = 30
-MAX_ACTIONS_PER_MATCH = 500*MAX_ACTIONS_PER_ROUND
+MAX_ACTIONS_PER_MATCH = 1500
 
 def roll_dice():
     return random.randint(1, 6)
@@ -129,7 +129,7 @@ class Game:
         # if player.has_died:
         #     return 0
 
-        reward = -0.1 # Base reward is negative to prevent stalling
+        reward = -0.01 # Base reward is negative to prevent stalling
 
         if player.has_conquered: # Prize for gaining a card
             reward += 1
@@ -384,11 +384,14 @@ class Game:
 
     def play_round(self, action=None):
 
-        if action:
+        if action != None:
             if self.current_player.is_human:
                 raise ValueError("Action issued to human player")
             self.current_player.action = action
 
+        if action == None:
+            if not self.current_player.is_human:
+                raise ValueError("No action issued to AI player")
 
         if self.round_action_counter >= MAX_ACTIONS_PER_ROUND:
             self.change_player()
