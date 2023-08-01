@@ -17,10 +17,10 @@ TRANSFER_PHASE = 2
 MAX_ACTIONS_PER_ROUND = 30
 MAX_ACTIONS_PER_MATCH = 4200
 
-BASE_REWARD = -0.1 # Base reward is negative to prevent stalling
-CARD_REWARD = 15
-TERRITORIAL_CHANGE_FACTOR = 10
-VICTORY_REWARD = 500
+BASE_REWARD = -0.01 # Base reward is negative to prevent stalling
+CARD_REWARD = 1.5
+TERRITORIAL_CHANGE_FACTOR = 1.0
+VICTORY_REWARD = 100.0
 
 def roll_dice():
     return random.randint(1, 6)
