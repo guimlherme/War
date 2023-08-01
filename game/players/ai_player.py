@@ -62,16 +62,16 @@ class AIPlayer(Player):
         if not countries:
             countries = self.territories
 
-        territory = self.get_action()
+        selected_territory = self.get_action()
 
-        if territory == None:
+        if selected_territory == None:
             self.reward_parcel -= BAD_SELECTION_PENALTY
             return
 
         num_troops = 1 # Place one by one
         remaining_troops = troops_to_place
 
-        if territory not in self.territories:
+        if selected_territory not in self.territories:
             self.reward_parcel -= BAD_SELECTION_PENALTY
             return
 

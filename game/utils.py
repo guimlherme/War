@@ -1,5 +1,5 @@
 
-DEBUG_FLAG = True
+DEBUG_FLAG = False
 
 def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
     if len(choice_list) == 0:

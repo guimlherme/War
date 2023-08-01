@@ -33,6 +33,16 @@ class Player:
 
     def get_card_types(self):
         return [card.get_card_type() for card in self.cards]
+    
+    def count_card_types(self):
+        counting = {
+            "Circle": 0,
+            "Square": 0,
+            "Triangle": 0
+        }
+        for card_type in self.get_card_types():
+            counting[card_type] += 1
+        return counting
 
     def remove_one_card_from_type(self, type):
         card_types = [card.get_card_type() for card in self.cards]

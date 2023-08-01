@@ -17,7 +17,7 @@ class Territory:
         return f"{self.name} (Owner: {self.owner.name}, Troops: {self.troops}, Links: {links})"
     
 class TerritoryCard:
-    def __init__(self, territory, card_type):
+    def __init__(self, territory: Territory, card_type: str):
         self.territory = territory
         self.card_type = card_type
 

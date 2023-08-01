@@ -15,6 +15,7 @@ ATTACK_PHASE = 1
 TRANSFER_PHASE = 2
 
 MAX_ACTIONS_PER_ROUND = 30
+MAX_ACTIONS_PER_MATCH = 500*MAX_ACTIONS_PER_ROUND
 
 def roll_dice():
     return random.randint(1, 6)
@@ -30,7 +31,8 @@ class Game:
         self.current_card_troop_exchange: int = 4
         self.current_player_index: int = 0
         self.current_phase = REINFORCE_PHASE
-        self.action_counter = 0
+        self.round_action_counter = 0
+        self.match_action_counter = 0
 
     def setup_players(self):
         players = []
@@ -57,11 +59,12 @@ class Game:
                 objectives_list.remove(objective)
                 players.append(AIPlayer(player_name, color, objective))
         return players
-        
+    
+    @property
+    def current_player(self):
+        return self.players[self.current_player_index]
 
-    def setup_board(self):
-
-        board = Board()
+    def setup_board(self, board = Board()):
 
         territories = board.territories_data.copy()
 
@@ -79,9 +82,30 @@ class Game:
     
     def setup_territory_cards(self):
         # Create TerritoryCard objects for each country
-        territory_cards = [TerritoryCard(territory.name, territory.shape) 
+        territory_cards = [TerritoryCard(territory, territory.shape) 
                            for territory in self.board]
         return territory_cards
+    
+    def reset(self):
+        del self.players
+        self.players = self.setup_players()
+
+        for territory in self.board:
+            territory.troops = 1
+            territory.owner = None
+        self.board = self.setup_board(self.board)
+
+        del self.cards
+        self.cards = self.setup_territory_cards()
+
+        self.current_card_troop_exchange = 4
+        self.current_player_index = 0
+        self.current_phase = REINFORCE_PHASE
+        self.round_action_counter = 0
+        self.match_action_counter = 0
+
+        return self.get_state(self.current_player)
+
 
     def display_board(self):
         for territory in self.board:
@@ -95,8 +119,7 @@ class Game:
             state.append(territory.troops)
         return state
     
-    def get_last_reward(self, player_index):
-        player = self.players[player_index]
+    def get_last_reward(self, player):
 
         if player.is_human:
             print("Something went wrong. Tried to calculate reward to a human")
@@ -208,22 +231,41 @@ class Game:
         return self.cards.pop()
 
     def exchange_cards_for_troops(self, player):
-        sets = [
-            ["Circle", "Circle", "Circle"],
-            ["Square", "Square", "Square"],
-            ["Triangle", "Triangle", "Triangle"],
-            ["Circle", "Square", "Triangle"]
-        ]
 
-        for card_set in sets:
-            if all(card in player.get_card_types() for card in card_set):
-                for card in card_set:
-                    removed_card = player.remove_one_card_from_type(card)
+        # TODO: make exchange controllable (e.g. choose the cards which will be traded)
+        exchange_successful = False
+        unique_cards = 0
+        card_types = ["Circle", "Square", "Triangle"]
+        cards_dict = player.count_card_types()
+
+        for card_type in card_types:
+            if cards_dict[card_type] >= 1:
+                unique_cards += 1
+            if cards_dict[card_type] >= 3:
+                for _ in range(3):
+                    removed_card = player.remove_one_card_from_type(card_type)
+                    if removed_card.territory.owner == player:
+                        debug_print(f"\nYou exchanged a card of {removed_card.territory.name}! 2 extra troops were added.")
+                        removed_card.territory.troops += 2
                     self.cards.append(removed_card)
                     random.shuffle(self.cards)
-                num_troops = self.current_card_troop_exchange
-                self.current_card_troop_exchange += 4
-                return num_troops
+                    exchange_successful = True
+        
+        # Prevent double exchanges
+        if unique_cards == 3 and not exchange_successful:
+            for card_type in card_types:
+                removed_card = player.remove_one_card_from_type(card_type)
+                if removed_card.territory.owner == player:
+                    debug_print(f"\nYou exchanged a card of {removed_card.territory.name}! 2 extra troops were added.")
+                    removed_card.territory.troops += 2
+                self.cards.append(removed_card)
+                random.shuffle(self.cards)
+            exchange_successful = True
+
+        if exchange_successful:
+            num_troops = self.current_card_troop_exchange
+            self.current_card_troop_exchange += 4
+            return num_troops     
 
         return 0
 
@@ -333,80 +375,89 @@ class Game:
         return True
 
     def change_player(self):
+        self.round_action_counter = 0
         self.current_player_index = (self.current_player_index + 1) % len(self.players)
-        current_player = self.players[self.current_player_index]
         # Make sure that next player is alive
-        while current_player.has_died:
+        while self.current_player.has_died:
             self.current_player_index = (self.current_player_index + 1) % len(self.players)
-            current_player = self.players[self.current_player_index]
 
 
-    def play_round(self):
-        current_player = self.players[self.current_player_index]
-        if self.action_counter >= MAX_ACTIONS_PER_ROUND:
+    def play_round(self, action=None):
+
+        if action:
+            if self.current_player.is_human:
+                raise ValueError("Action issued to human player")
+            self.current_player.action = action
+
+
+        if self.round_action_counter >= MAX_ACTIONS_PER_ROUND:
             self.change_player()
-            return [self.current_player_index, self.get_state(current_player)]
-        self.action_counter += 1
+            return [self.current_player_index, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
+        self.round_action_counter += 1
+
+        if self.match_action_counter >= MAX_ACTIONS_PER_MATCH:
+            return [None, self.get_state(self.current_player), 0]
+        self.match_action_counter += 1
 
         if self.current_phase == REINFORCE_PHASE:
-            if current_player.remaining_troops_to_place == 0:
-                self.start_round(current_player)
-            remaining_troops_to_place = self.reinforcement_phase(current_player)
+            if self.current_player.remaining_troops_to_place == 0:
+                self.start_round(self.current_player)
+            remaining_troops_to_place = self.reinforcement_phase(self.current_player)
 
             if remaining_troops_to_place == 0:
-                debug_print(f"\n--- {current_player.name}'s Turn ---")
+                debug_print(f"\n--- {self.current_player.name}'s Turn ---")
                 if self.debug:
                     self.display_board()
 
                 self.current_phase = ATTACK_PHASE
                 self.current_attack_success = False
 
-            return [self.current_player_index, self.get_state(current_player)]
+            return [self.current_player_index, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
         
         if self.current_phase == ATTACK_PHASE:
 
-            attack_success, continue_attacking = self.attack_phase(current_player)
+            attack_success, continue_attacking = self.attack_phase(self.current_player)
 
             if attack_success and not self.current_attack_success:
                 # This is to make sure that the reward is immediate
-                current_player.has_conquered = True
+                self.current_player.has_conquered = True
                 self.current_attack_success = True
 
             if not continue_attacking:
                 # Give cards if one capture is done
                 if self.current_attack_success:
                     debug_print("Card drawn")
-                    current_player.cards.append(self.draw_card())
+                    self.current_player.cards.append(self.draw_card())
                 
                 self.current_phase = TRANSFER_PHASE
             
-            return [self.current_player_index, self.get_state(current_player)]
+            return [self.current_player_index, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
         
         if self.current_phase == TRANSFER_PHASE:
 
-            continue_transfering = self.transfer_phase(current_player)
+            continue_transfering = self.transfer_phase(self.current_player)
 
             if not continue_transfering:
 
                 # Check if the game is over
                 if self.objectives_enabled:
-                    if check_win(current_player, self.players, self.board):
-                        debug_print(f"\nCongratulations! {current_player.name} won the game!")
-                        current_player.has_won = True
-                        return [None, self.get_state(current_player)]
+                    if check_win(self.current_player, self.players, self.board):
+                        debug_print(f"\nCongratulations! {self.current_player.name} won the game!")
+                        self.current_player.has_won = True
+                        return [None, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
                 else:
-                    if simple_check_win(current_player, self.players, self.board):
-                        current_player.has_won = True
-                        return [None, self.get_state(current_player)]
+                    if simple_check_win(self.current_player, self.players, self.board):
+                        self.current_player.has_won = True
+                        return [None, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
 
                 # Do the reward counting updates
 
-                self.action_counter = 0
+                self.round_action_counter = 0
                 self.current_phase = REINFORCE_PHASE
 
                 self.change_player()
 
-            return [self.current_player_index, self.get_state(current_player)]
+            return [self.current_player_index, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
 
         
 
