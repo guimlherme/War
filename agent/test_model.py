@@ -1,7 +1,7 @@
 import os
 
 from agent.environment import WarEnvironment
-from agent.model import AIPlayer
+from agent.model import AIPlayer, select_valid_action
 from agent.state_action_space import len_state_space, action_space
 
 import torch
@@ -21,7 +21,7 @@ def test_model(env, player0, player1):
             # Greedy Evaluation
             with torch.no_grad():
                 q_values = current_player.dqn_model(state)
-                action = torch.argmax(q_values).item()
+                action = select_valid_action(env, q_values)
 
             next_player_index, next_state, next_player_reward = env.step(action_space[action])
             # print(next_player_reward)
@@ -55,8 +55,8 @@ def test_model(env, player0, player1):
 if __name__ == "__main__":
 
     # Define loaded model path
-    model0_episode = 90
-    model1_episode = 0
+    model0_episode = 30
+    model1_episode = 5
 
     base_path = os.getcwd()
 

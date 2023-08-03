@@ -15,11 +15,11 @@ from agent.logger import CustomLogger
 # Set constants
 INTERMEDIATE_LAYER_SIZE = 128
 BATCH_SIZE = 64
-GAMMA = 0.99 # War is a strategic game, so we need to go for late rewards
-LEARNING_RATE = 1e-6
+GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
+LEARNING_RATE = 1e-5
 EPSILON_START = 1.0
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.95
+EPSILON_DECAY = 0.995
 TARGET_UPDATE_FREQUENCY = 11 # Must be odd to save both models
 MEMORY_CAPACITY = 1000
 EPISODES = 1000
@@ -112,8 +112,9 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
             else:
                 with torch.no_grad():
                     q_values = current_player.dqn_model(state)
-                    if env.game.match_action_counter % 100 == 0: print(current_player.name, q_values)
                 action = select_valid_action(env, q_values)
+                if env.game.match_action_counter % 100 == 0: print(current_player.name, 
+                                                                   torch.median(q_values).item(), action)
                 # action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action_space[action])
