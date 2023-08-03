@@ -23,7 +23,8 @@ Action structure:
 Attacks will run until conquered or can't proceed. Transfers will happen with all troops.
 """
 
-BAD_SELECTION_PENALTY = -0.2
+# This constant isn't important anymore, as the AI can't choose invalid actions
+BAD_SELECTION_PENALTY = -0
 
 from game.players.player import Player
 from game.utils import debug_print

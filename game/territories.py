@@ -35,6 +35,9 @@ class Board:
     def __iter__(self):
         for t in self.territories_data:
             yield t
+    
+    def __len__(self):
+        return len(self.territories_data)
 
     def initiate_territories(self):
         # North America

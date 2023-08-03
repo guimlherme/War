@@ -10,6 +10,12 @@ class WarEnvironment:
     def reset(self):
         return self.game.reset()
 
-    def step(self, action):
+    def step(self, action, current_player_index=None):
         return self.game.play_round(action=action)
-        
+    
+    def get_valid_actions_table(self):
+        return self.game.get_valid_actions_table()
+    
+    def get_valid_actions_indexes(self):
+        valid_actions_table = self.get_valid_actions_table()
+        return [i for i in range(len(valid_actions_table)) if valid_actions_table[i] == True]

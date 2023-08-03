@@ -15,15 +15,20 @@ from agent.logger import CustomLogger
 # Set constants
 INTERMEDIATE_LAYER_SIZE = 128
 BATCH_SIZE = 64
-GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
+GAMMA = 0.99 # War is a strategic game, so we need to go for late rewards
+LEARNING_RATE = 1e-6
 EPSILON_START = 1.0
 EPSILON_END = 0.01
-EPSILON_DECAY = 0.995
+EPSILON_DECAY = 0.95
 TARGET_UPDATE_FREQUENCY = 11 # Must be odd to save both models
-MEMORY_CAPACITY = 10000
+MEMORY_CAPACITY = 1000
 EPISODES = 1000
 SAVE_MODEL_FREQUENCY = 5
 
+device = ("cpu")
+# Uncomment next line to activate GPU support
+#device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+torch.set_default_device(device)
 
 class DQNModel(nn.Module):
     def __init__(self, input_size, num_actions):
@@ -67,11 +72,21 @@ class AIPlayer:
 
         self.name = name
         self.dqn_model = DQNModel(input_size, num_actions)
-        self.target_model = self.dqn_model
-        self.optimizer = optim.Adam(self.dqn_model.parameters(), lr=0.001)
+        self.target_model = DQNModel(input_size, num_actions)
+        self.target_model.load_state_dict(self.dqn_model.state_dict())
+
+        self.optimizer = optim.AdamW(self.dqn_model.parameters(), lr=LEARNING_RATE)
         self.replay_buffer = ReplayBuffer(MEMORY_CAPACITY)
-        self.mse_loss = nn.MSELoss()
-        
+        self.loss = nn.SmoothL1Loss()
+
+def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
+    q_values_numpy = q_values.cpu().squeeze().numpy()
+    valid_actions_table = np.array(env.get_valid_actions_table())
+    validity_factor = np.where(valid_actions_table, 0, -np.inf)
+    q_values_validated = q_values_numpy + validity_factor
+    return np.argmax(q_values_validated)
+
+
 def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1')):
 
     model_checkpoint_folder = 'models'
@@ -85,16 +100,21 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         done = False
         total_reward = 0
-        current_training = player0 if episode % 2 == 0 else player1 
+        current_training = player0 # Train only one agent
+        # current_training = player0 if episode % 2 == 0 else player1 
         current_player = player0
 
         while not done:
             # Epsilon-Greedy Exploration
             if random.random() < epsilon:
-                action = random.randrange(num_actions)
+                valid_actions = env.get_valid_actions_indexes()
+                action = random.choice(valid_actions)
             else:
-                q_values = current_player.dqn_model(state)
-                action = torch.argmax(q_values).item()
+                with torch.no_grad():
+                    q_values = current_player.dqn_model(state)
+                    if env.game.match_action_counter % 100 == 0: print(current_player.name, q_values)
+                action = select_valid_action(env, q_values)
+                # action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action_space[action])
 
@@ -121,8 +141,11 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 batch = current_training.replay_buffer.sample(BATCH_SIZE)
                 states, actions, rewards, next_states, dones, player_ids = zip(*batch)
 
-                states = torch.tensor(np.concatenate(states), dtype=torch.float32)
-                next_states = torch.tensor(np.concatenate(next_states), dtype=torch.float32)
+                states = torch.tensor(np.concatenate([s.cpu() for s in states]), 
+                                      dtype=torch.float32).to(device)
+                actions_tensor = torch.tensor(actions, dtype=torch.int64).unsqueeze(0)
+                next_states = torch.tensor(np.concatenate([n.cpu() for n in next_states]), 
+                                           dtype=torch.float32).to(device)
 
                 q_values_next = current_training.target_model(next_states)
 
@@ -135,8 +158,10 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                         target_q_values[i] = rewards[i] + GAMMA * torch.max(q_values_next[i])
 
                 q_values = current_training.dqn_model(states)
-                q_values_actions = torch.sum(torch.nn.functional.one_hot(torch.tensor(actions), num_actions) * q_values, dim=1)
-                loss = current_training.mse_loss(q_values_actions, target_q_values)
+                # q_values_actions = torch.sum(torch.nn.functional.one_hot(torch.tensor(actions), num_actions) * q_values, dim=1)
+                q_values_actions = q_values.gather(1, actions_tensor).squeeze()
+                # print(q_values_actions == q_values_actions_2, q_values_actions, q_values_actions_2)
+                loss = current_training.loss(q_values_actions, target_q_values)
 
                 current_training.optimizer.zero_grad()
                 loss.backward()
@@ -159,11 +184,11 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 os.makedirs(model_checkpoint_folder)
             
             # Save DQN Model 1
-            model_checkpoint_path1 = os.path.join(model_checkpoint_folder, f"dqn_model1_episode_{episode}.pth")
+            model_checkpoint_path1 = os.path.join(model_checkpoint_folder, f"dqn_model0_episode_{episode}.pth")
             torch.save(player0.dqn_model.state_dict(), model_checkpoint_path1)
 
             # Save DQN Model 2
-            model_checkpoint_path2 = os.path.join(model_checkpoint_folder, f"dqn_model2_episode_{episode}.pth")
+            model_checkpoint_path2 = os.path.join(model_checkpoint_folder, f"dqn_model1_episode_{episode}.pth")
             torch.save(player1.dqn_model.state_dict(), model_checkpoint_path2)
 
 

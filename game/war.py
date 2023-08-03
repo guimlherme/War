@@ -10,14 +10,14 @@ from game.utils import human_selector, debug_print
 from game.win_conditions import check_win, simple_check_win, objectives, objectives_descriptions
 import numpy as np
 
-REINFORCE_PHASE = 0
+REINFORCEMENT_PHASE = 0
 ATTACK_PHASE = 1
 TRANSFER_PHASE = 2
 
-MAX_ACTIONS_PER_ROUND = 50
-MAX_ACTIONS_PER_MATCH = 4200
+MAX_ACTIONS_PER_ROUND = 40
+MAX_ACTIONS_PER_MATCH = 3000
 
-BASE_REWARD = -0.01 # Base reward is negative to prevent stalling
+BASE_REWARD = -0.01 # Base reward is slightly negative to prevent stalling
 CARD_REWARD = 1.5
 TERRITORIAL_CHANGE_FACTOR = 1.0
 VICTORY_REWARD = 100.0
@@ -35,7 +35,7 @@ class Game:
         self.cards: List[TerritoryCard] = self.setup_territory_cards()
         self.current_card_troop_exchange: int = 4
         self.current_player_index: int = 0
-        self.current_phase = REINFORCE_PHASE
+        self.current_phase = REINFORCEMENT_PHASE
         self.round_action_counter = 0
         self.match_action_counter = 0
 
@@ -105,7 +105,7 @@ class Game:
 
         self.current_card_troop_exchange = 4
         self.current_player_index = 0
-        self.current_phase = REINFORCE_PHASE
+        self.current_phase = REINFORCEMENT_PHASE
         self.round_action_counter = 0
         self.match_action_counter = 0
 
@@ -149,6 +149,34 @@ class Game:
         reward += TERRITORIAL_CHANGE_FACTOR * player.calculate_territory_change()
 
         return reward
+
+    def get_valid_actions_table(self):
+        actions_table = [True] # Pass is always an option
+        for territory in self.board:
+            if self.current_phase == REINFORCEMENT_PHASE:
+                if territory.owner == self.current_player: # If current player is the owner
+                    actions_table.append(True)
+                else:
+                    actions_table.append(False)
+            elif self.current_phase == ATTACK_PHASE:
+                if territory.owner == self.current_player:
+                    actions_table.append(False)
+                else:
+                    if any([(n.owner == self.current_player and n.troops >= 2) for n in territory.neighbors]):
+                        actions_table.append(True)
+                    else:
+                        actions_table.append(False)
+            elif self.current_phase == TRANSFER_PHASE:
+                if territory.owner != self.current_player:
+                    actions_table.append(False)
+                else:
+                    if any([(n.owner == self.current_player and n.troops >= 2) for n in territory.neighbors]):
+                        actions_table.append(True)
+                    else:
+                        actions_table.append(False)
+        return actions_table
+
+                
 
     def set_ai_action(self, player_index, action):
 
@@ -406,7 +434,7 @@ class Game:
             return [None, self.get_state(self.current_player), 0]
         self.match_action_counter += 1
 
-        if self.current_phase == REINFORCE_PHASE:
+        if self.current_phase == REINFORCEMENT_PHASE:
             if self.current_player.remaining_troops_to_place == 0:
                 self.start_round(self.current_player)
             remaining_troops_to_place = self.reinforcement_phase(self.current_player)
@@ -460,7 +488,7 @@ class Game:
                 # Do the reward counting updates
 
                 self.round_action_counter = 0
-                self.current_phase = REINFORCE_PHASE
+                self.current_phase = REINFORCEMENT_PHASE
 
                 self.change_player()
 

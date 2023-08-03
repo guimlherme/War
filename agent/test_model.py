@@ -19,11 +19,12 @@ def test_model(env, player0, player1):
 
         while not done:
             # Greedy Evaluation
-            q_values = current_player.dqn_model(state)
-            action = torch.argmax(q_values).item()
+            with torch.no_grad():
+                q_values = current_player.dqn_model(state)
+                action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action_space[action])
-            print(next_player_reward)
+            # print(next_player_reward)
 
             if next_player_index == None:
                 done = True
@@ -54,13 +55,13 @@ def test_model(env, player0, player1):
 if __name__ == "__main__":
 
     # Define loaded model path
-    model0_episode = 530
-    model1_episode = 5
+    model0_episode = 90
+    model1_episode = 0
 
     base_path = os.getcwd()
 
-    model0_path = os.path.join(base_path, f'models/dqn_model1_episode_{model0_episode}.pth')
-    model1_path = os.path.join(base_path, f'models/dqn_model2_episode_{model1_episode}.pth')
+    model0_path = os.path.join(base_path, f'models/dqn_model0_episode_{model0_episode}.pth')
+    model1_path = os.path.join(base_path, f'models/dqn_model0_episode_{model1_episode}.pth')
 
 
     # Instatiate WarEnvironment with 2 players
