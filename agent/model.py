@@ -50,8 +50,8 @@ class ReplayBuffer:
         self.buffer = []
         self.position = 0
 
-    def add(self, state, action, reward, next_state, done, player_id):
-        data = (state, action, reward, next_state, done, player_id)
+    def add(self, state, valid_actions, action, reward, next_state, done, player_id):
+        data = (state, valid_actions, action, reward, next_state, done, player_id)
         if len(self.buffer) < self.capacity:
             self.buffer.append(data)
         else:
@@ -60,6 +60,9 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         return random.sample(self.buffer, batch_size)
+    
+    def reset(self):
+        self.buffer.clear()
 
     def __len__(self):
         return len(self.buffer)
@@ -97,6 +100,9 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
 
+    if isinstance(player0, AIPlayer): player0.replay_buffer.reset()
+    if isinstance(player1, AIPlayer): player1.replay_buffer.reset()
+
     num_actions = len(action_space)
     epsilon = max(EPSILON_END, EPSILON_START * (EPSILON_DECAY ** start_episode))
     for episode in range(start_episode, EPISODES):
@@ -115,6 +121,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 valid_actions = env.get_valid_actions_indexes()
                 action = random.choice(valid_actions)
             else:
+                valid_actions = env.get_valid_actions_indexes()
                 with torch.no_grad():
                     q_values = current_player.dqn_model(state)
                 action = select_valid_action(env, q_values)
@@ -138,7 +145,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
             # Add experience to the agent's replay buffer
             if next_player == current_training:
                 total_reward += reward
-                next_player.replay_buffer.add(state, action, reward, next_state, done, current_player)
+                next_player.replay_buffer.add(state, valid_actions, action, reward, next_state, done, current_player)
 
             state = next_state
             current_player = next_player
@@ -146,7 +153,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
             # Train the DQN model
             if len(current_training.replay_buffer) >= BATCH_SIZE:
                 batch = current_training.replay_buffer.sample(BATCH_SIZE)
-                states, actions, rewards, next_states, dones, player_ids = zip(*batch)
+                states, valid_actions, actions, rewards, next_states, dones, player_ids = zip(*batch)
 
                 states = torch.cat(next_states, dim=0)
                 actions_tensor = torch.tensor(actions, dtype=torch.int64).unsqueeze(0)
@@ -160,8 +167,8 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                     if dones[i]:
                         target_q_values[i] = rewards[i]
                     else:
-                        max_valid_q_values_next = torch.max(q_values_next[i][env.get_valid_actions_from_state(states[i])])
-                        target_q_values[i] = rewards[i] + GAMMA * torch.max(max_valid_q_values_next)
+                        # max_valid_q_values_next = torch.max(q_values_next[i][env.get_valid_actions_from_state(states[i])]) #too slow
+                        target_q_values[i] = rewards[i] + GAMMA * torch.max(q_values_next[i][valid_actions[i]])
 
                 q_values = current_training.dqn_model(states)
                 # q_values_actions = torch.sum(torch.nn.functional.one_hot(torch.tensor(actions), num_actions) * q_values, dim=1)
