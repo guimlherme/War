@@ -9,7 +9,7 @@ rewards = []
 with open('training_log.log', 'r') as file:
     for line in file:
         if 'Episode' in line and 'Total Reward' in line:
-            time_episode_str, agent_str, reward_str = line.split(', ')
+            time_episode_str, agent_str, reward_str, epsilon_str = line.split(', ')
             episode = int(time_episode_str.split(' ')[4])
             agent = agent_str.split(' ')[1]
             reward = float(reward_str.split(': ')[1])

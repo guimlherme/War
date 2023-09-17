@@ -55,7 +55,7 @@ def test_model(env, player0, player1):
 if __name__ == "__main__":
 
     # Define loaded model path
-    model0_episode = 30
+    model0_episode = 55
     model1_episode = 5
 
     base_path = os.getcwd()

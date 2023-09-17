@@ -1,6 +1,7 @@
 
 class Territory:
-    def __init__(self, name, shape, owner=None, troops=1):
+    def __init__(self, name, shape, owner=None, troops=1, index=None):
+        index = index
         self.name = name
         self.shape = shape
         self.owner = owner
@@ -28,6 +29,7 @@ class Board:
     def __init__(self):
         self.continents = None
         self.territories_data = self.initiate_territories()
+        self.initiate_indexes()
         
     def __getitem__(self, key):
         return self.territories_data[key]
@@ -38,6 +40,12 @@ class Board:
     
     def __len__(self):
         return len(self.territories_data)
+    
+    def initiate_indexes(self):
+        current_index = 0
+        for territory in self.territories_data:
+            territory.index = current_index
+            current_index += 1
 
     def initiate_territories(self):
         # North America
