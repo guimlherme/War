@@ -39,7 +39,6 @@ class AIPlayer(Player):
 
     def get_action(self):
         territory_index = self.action
-        self.territory_index = None
 
         if territory_index == None:
             raise ValueError("Got a null action")

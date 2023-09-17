@@ -129,7 +129,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                                                                    torch.median(q_values).item(), action)
                 # action = torch.argmax(q_values).item()
 
-            next_player_index, next_state, next_player_reward = env.step(action_space[action])
+            next_player_index, next_state, next_player_reward = env.step(action)
             next_player_reward = next_player_reward #TODO: FIX THIS
 
             if next_player_index == None:
@@ -167,7 +167,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                     if dones[i]:
                         target_q_values[i] = rewards[i]
                     else:
-                        # max_valid_q_values_next = torch.max(q_values_next[i][env.get_valid_actions_from_state(states[i])]) #too slow
+                        # target_q_values[i] = rewards[i] + GAMMA * q_values_next[i][valid_actions[i]]
                         target_q_values[i] = rewards[i] + GAMMA * torch.max(q_values_next[i][valid_actions[i]])
 
                 q_values = current_training.dqn_model(states)

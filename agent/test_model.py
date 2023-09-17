@@ -23,7 +23,7 @@ def test_model(env, player0, player1):
                 q_values = current_player.dqn_model(state)
                 action = select_valid_action(env, q_values)
 
-            next_player_index, next_state, next_player_reward = env.step(action_space[action])
+            next_player_index, next_state, next_player_reward = env.step(action)
             # print(next_player_reward)
 
             if next_player_index == None:

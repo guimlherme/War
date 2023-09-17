@@ -18,7 +18,7 @@ MAX_ACTIONS_PER_ROUND = 40
 MAX_ACTIONS_PER_MATCH = 3000
 
 BASE_REWARD = -0.01 # Base reward is slightly negative to prevent stalling
-CARD_REWARD = 0.3
+CARD_REWARD = 0.8
 TERRITORIAL_CHANGE_FACTOR = 1.0
 VICTORY_REWARD = 100.0
 
@@ -36,6 +36,7 @@ class Game:
         self.current_card_troop_exchange: int = 4
         self.current_player_index: int = 0
         self.current_phase = REINFORCEMENT_PHASE
+        self.round_actions = set()
         self.round_action_counter = 0
         self.match_action_counter = 0
 
@@ -461,11 +462,14 @@ class Game:
 
 
     def play_round(self, action=None):
-
+        print(self.current_player.remaining_troops_to_place)
         if action != None:
             if self.current_player.is_human:
                 raise ValueError("Action issued to human player")
             self.current_player.action = action
+            target_territory = self.current_player.get_action()
+            if target_territory is not None:
+                self.round_actions.add((self.current_phase, target_territory.name, target_territory.troops))
 
         if action == None:
             if not self.current_player.is_human:
@@ -536,6 +540,11 @@ class Game:
                 self.round_action_counter = 0
                 self.current_phase = REINFORCEMENT_PHASE
 
+                print(self.current_player.name, len(self.current_player.territories))
+                print(self.round_actions)
+                # input()
+
+                self.round_actions.clear()
                 self.change_player()
 
             return [self.current_player_index, self.get_state(self.current_player), self.get_last_reward(self.current_player)]

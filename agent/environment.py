@@ -1,4 +1,5 @@
 from game.war import Game
+from agent.state_action_space import action_space
 
 
 class WarEnvironment:
@@ -11,7 +12,7 @@ class WarEnvironment:
         return self.game.reset()
 
     def step(self, action, current_player_index=None):
-        return self.game.play_round(action=action)
+        return self.game.play_round(action=action_space[action])
     
     def get_valid_actions_from_state(self, state):
         return self.game.get_valid_actions_from_state(state)
