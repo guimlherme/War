@@ -462,7 +462,6 @@ class Game:
 
 
     def play_round(self, action=None):
-        print(self.current_player.remaining_troops_to_place)
         if action != None:
             if self.current_player.is_human:
                 raise ValueError("Action issued to human player")
@@ -540,8 +539,8 @@ class Game:
                 self.round_action_counter = 0
                 self.current_phase = REINFORCEMENT_PHASE
 
-                print(self.current_player.name, len(self.current_player.territories))
-                print(self.round_actions)
+                # print(self.current_player.name, len(self.current_player.territories))
+                # print(self.round_actions)
                 # input()
 
                 self.round_actions.clear()
