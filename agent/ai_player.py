@@ -10,7 +10,7 @@ import torch.optim as optim
 # Set constants
 INTERMEDIATE_LAYER_SIZE = 128
 LEARNING_RATE = 1e-6
-MEMORY_CAPACITY = 1000
+MEMORY_CAPACITY = 10000
 
 class ReplayBuffer:
     def __init__(self, capacity):
