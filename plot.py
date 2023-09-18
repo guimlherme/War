@@ -20,15 +20,17 @@ with open('training_log.log', 'r') as file:
 window_size = 10
 
 for agent in set(agents):
+    agent_rewards = [r for i, r in enumerate(rewards) if agents[i] == agent]
+    agent_episodes = [e for i, e in enumerate(episodes) if agents[i] == agent]
     moving_averages = []
 
     # Loop through the array to consider
     # every window of size 3
-    for i in range(len(rewards) - window_size + 1):
+    for i in range(len(agent_rewards) - window_size + 1):
         
         # Store elements from i to i+window_size
         # in list to get the current window
-        window = rewards[i : i + window_size]
+        window = agent_rewards[i : i + window_size]
     
         # Calculate the average of current window
         window_average = round(sum(window) / window_size, 2)
@@ -42,7 +44,7 @@ for agent in set(agents):
 
     # Plotting
     plt.figure(figsize=(8, 6))
-    plt.plot(episodes[window_size-1:], moving_averages, marker='o', linestyle='-', label=agent)
+    plt.plot(agent_episodes[window_size-1:], moving_averages, marker='o', linestyle='-', label=agent)
     plt.xlabel('Episode')
     plt.ylabel('Total Reward')
     plt.title('Rewards vs Episodes')
