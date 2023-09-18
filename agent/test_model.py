@@ -1,7 +1,8 @@
 import os
+from agent.ai_player import AIPlayer
 
 from agent.environment import WarEnvironment
-from agent.model import AIPlayer, select_valid_action
+from agent.model import select_valid_action
 from agent.state_action_space import len_state_space, action_space
 
 import torch
@@ -45,7 +46,14 @@ def test_model(env, player0, player1):
             state = next_state
             current_player = next_player
 
-        print(state)
+        territories_owners = state[0][1::2]
+        current_player_number = 0 if current_player==player0 else 1
+        other_player_number = 1 if current_player==player0 else 0
+
+        player0_territories = len([t for t in territories_owners if t==current_player_number])
+        player1_territories = len([t for t in territories_owners if t==other_player_number])
+        print(state, player0_territories, player1_territories)
+        
         total_reward_msg_0 = f"Episode {episode}, Agent {player0.name}, Total Reward: {total_reward_0}"
         total_reward_msg_1 = f"Episode {episode}, Agent {player1.name}, Total Reward: {total_reward_1}"
 
@@ -55,14 +63,13 @@ def test_model(env, player0, player1):
 if __name__ == "__main__":
 
     # Define loaded model path
-    model0_episode = 55
-    model1_episode = 5
+    model0_episode = 1855
+    model1_episode = 1000
 
     base_path = os.getcwd()
 
     model0_path = os.path.join(base_path, f'models/dqn_model0_episode_{model0_episode}.pth')
     model1_path = os.path.join(base_path, f'models/dqn_model0_episode_{model1_episode}.pth')
-
 
     # Instatiate WarEnvironment with 2 players
     env = WarEnvironment(2)
