@@ -7,7 +7,6 @@ class Objective:
         self.target = target
         self.description = description
 
-# Conquistar na totalidade a EUROPA, a board.continents["oceania"] e mais um terceiro.
 def objective_one(player, colors, board):
     if (set(board.continents["europe"]) < set(player.territories) and 
         set(board.continents["oceania"]) < set(player.territories)):
@@ -18,14 +17,12 @@ def objective_one(player, colors, board):
             return True
     return False
 
-# Conquistar na totalidade a ÁSIA e a AMÉRICA DO SUL.
 def objective_two(player, colors, board):
     if (set(board.continents["south_america"]) < set(player.territories) and 
         set(board.continents["asia"]) < set(player.territories)):
         return True
     return False
 
-# Conquistar na totalidade a EUROPA, a AMÉRICA DO SUL e mais um terceiro.
 def objective_three(player, colors, board):
     if (set(board.continents["europe"]) < set(player.territories) and 
         set(board.continents["south_america"]) < set(player.territories)):
@@ -36,7 +33,6 @@ def objective_three(player, colors, board):
             return True
     return False
 
-# Conquistar 18 TERRITÓRIOS e ocupar cada um deles com pelo menos dois exércitos.
 def objective_four(player, colors, board):
     if (len(player.territories) >= 18):
         territories_2 = 0
@@ -47,27 +43,23 @@ def objective_four(player, colors, board):
                 return True
     return False
 
-# Conquistar na totalidade a ÁSIA e a ÁFRICA.
 def objective_five(player, colors, board):
     if (set(board.continents["asia"]) < set(player.territories) and 
         set(board.continents["africa"]) < set(player.territories)):
         return True
     return False
 
-# Conquistar na totalidade a AMÉRICA DO NORTE e a ÁFRICA.
 def objective_six(player, colors, board):
     if (set(board.continents["north_america"]) < set(player.territories) and 
         set(board.continents["africa"]) < set(player.territories)):
         return True
     return False
 
-# Conquistar 24 TERRITÓRIOS à sua escolha.
 def objective_seven(player, colors, board):
     if (len(player.territories) >= 24):
         return True
     return False
 
-# Conquistar na totalidade a AMÉRICA DO NORTE e a board.continents["oceania"].
 def objective_eight(player, colors, board):
     if (set(board.continents["north_america"]) < set(player.territories) and set(board.continents["oceania"]) < set(player.territories)):
         return True
@@ -138,14 +130,14 @@ objectives_functions = [objective_one,
                         objective_fourteen]
 
 objectives_descriptions = {
-    objective_one: 'Conquer all of board.continents["europe"], board.continents["oceania"], and another continent of your choice.',
-    objective_two: 'Conquer all of SOUTH AMERICA and board.continents["asia"].',
-    objective_three: 'Conquer all of board.continents["europe"], SOUTH AMERICA, and another continent of your choice.',
+    objective_one: 'Conquer all of EUROPE, OCEANIA, and another continent of your choice.',
+    objective_two: 'Conquer all of SOUTH AMERICA and ASIA.',
+    objective_three: 'Conquer all of EUROPE, SOUTH AMERICA, and another continent of your choice.',
     objective_four: 'Conquer 18 TERRITORIES and occupy each one with at least two armies.',
-    objective_five: 'Conquer all of board.continents["asia"] and board.continents["africa"].',
-    objective_six: 'Conquer all of NORTH AMERICA and board.continents["africa"].',
+    objective_five: 'Conquer all of ASIA and AFRICA.',
+    objective_six: 'Conquer all of NORTH AMERICA and AFRICA.',
     objective_seven: 'Conquer 24 TERRITORIES of your choice.',
-    objective_eight: 'Conquer all of NORTH AMERICA and board.continents["oceania"].',
+    objective_eight: 'Conquer all of NORTH AMERICA and OCEANIA.',
     objective_nine: 'Eliminate the BLUE player. If you are the BLUE player or the BLUE player does not exist or the BLUE player is eliminated by someone else, then your objective is to conquer 24 territories.',
     objective_ten: 'Eliminate the YELLOW player. If you are the YELLOW player or the YELLOW player does not exist or the YELLOW player is eliminated by someone else, then your objective is to conquer 24 territories.',
     objective_eleven: 'Eliminate the RED player. If you are the RED player or the RED player does not exist or the RED player is eliminated by someone else, then your objective is to conquer 24 territories.',
