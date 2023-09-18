@@ -10,4 +10,4 @@ action_space += [-1] # finish phase
 action_space += list(territory_ids)
 
 # Define the dimension of the state space
-len_state_space = 1 + 2 * len(board.territories_data)
+len_state_space = 1 + 1 + 2 * len(board.territories_data)

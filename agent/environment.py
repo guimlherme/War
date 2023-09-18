@@ -5,8 +5,7 @@ from agent.state_action_space import action_space
 class WarEnvironment:
     def __init__(self, num_players):
         self.num_players = num_players
-        # TODO: train with objectives
-        self.game = Game(self.num_players, debug=False, objectives_enabled=False)
+        self.game = Game(self.num_players, debug=False, objectives_enabled=True)
 
     def reset(self):
         return self.game.reset()

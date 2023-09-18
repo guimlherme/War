@@ -7,7 +7,7 @@ from game.players.ai_player import AIPlayer
 
 from game.territories import Board, Territory, TerritoryCard
 from game.utils import human_selector, debug_print
-from game.win_conditions import check_win, simple_check_win, objectives, objectives_descriptions
+from game.win_conditions import check_win, simple_check_win, objectives
 import numpy as np
 
 REINFORCEMENT_PHASE = 0
@@ -53,7 +53,7 @@ class Game:
                 objective = random.choice(objectives_list)
                 objectives_list.remove(objective)
                 input("\nPress enter to see your objective\n")
-                debug_print(objectives_descriptions[objective])
+                debug_print(objective.description)
                 input("\nPress enter to hide your objective\n")
                 os.system('cls' if os.name == 'nt' else 'clear')
                 players.append(HumanPlayer(player_name, color, objective))
@@ -117,9 +117,10 @@ class Game:
         for territory in self.board:
             debug_print(territory)
 
-    def get_state(self, player):
+    def get_state(self, player: Player):
         state = []
         state.append(self.current_phase)
+        state.append(player.objective.id)
         for territory in self.board:
             state.append(player.players_dict(territory.owner))
             state.append(territory.troops)
@@ -131,9 +132,8 @@ class Game:
             print("Something went wrong. Tried to calculate reward to a human")
             return 0
         
-        # Next lines are done in win_condition to facilitate checking
-        # if player.has_died:
-        #     return 0
+        if player.has_died:
+            raise ValueError('Tried to get reward for a dead player')
 
         reward = BASE_REWARD
 
@@ -235,12 +235,14 @@ class Game:
         
         player.action = action
 
-    def conquer_territory(self, attacker, defender):
+    def conquer_territory(self, attacker: Territory, defender: Territory):
         defender.owner.remove_territory(defender)
         attacker.owner.add_territory(defender)
 
         if len(defender.owner.territories) == 0:
             defender.owner.has_died = True
+            attacker.owner.killed_list.append(defender.owner)
+            print('Someone has died! ', attacker.owner.name, ' killed ', defender.owner.name)
 
         defender.owner = attacker.owner
 

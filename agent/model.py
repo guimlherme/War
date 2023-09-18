@@ -1,6 +1,8 @@
 import numpy as np
 import random
 import os
+import sys
+import shutil
 import logging
 import cProfile
 
@@ -34,8 +36,8 @@ def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
 
 def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1'), start_episode=0):
 
-    player0.dqn_model.to(device)
-    player1.dqn_model.to(device)
+    if isinstance(player0, AIPlayer): player0.dqn_model.to(device)
+    if isinstance(player1, AIPlayer): player1.dqn_model.to(device)
 
     print('player0: ', type(player0))
     print('player1: ', type(player0))
@@ -53,8 +55,10 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         done = False
         total_reward = 0
-        # current_training = player0 # Train only one agent
-        current_training = player0 if episode % 20 < 10 else player1 # Change training agent every 10 rounds
+        if not isinstance(player1, AIPlayer):
+            current_training = player0 # Train only one agent
+        else:
+            current_training = player0 if episode % 20 < 10 else player1 # Change training agent every 10 rounds
         current_player = player0
 
         while not done:
@@ -72,7 +76,6 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 # action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action)
-            next_player_reward = next_player_reward #TODO: FIX THIS
 
             if next_player_index == None:
                 done = True
@@ -140,7 +143,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
 
             # Update Target Network
             if episode % TARGET_UPDATE_FREQUENCY == 0:
-                # TODO: update all networks
+                # TODO: maybe update all networks
                 current_training.target_model.load_state_dict(current_training.dqn_model.state_dict())
 
         # Decay Epsilon
@@ -165,6 +168,11 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 torch.save(player1.dqn_model.state_dict(), model_checkpoint_path2)
 
 def main():
+    # Verify if the user demanded to train with a random agent or itself
+    # No need to use parser just for this
+    force_random_agent = (len(sys.argv) >= 2 and sys.argv[1] == '-r')
+    force_train_itself = (len(sys.argv) >= 2 and sys.argv[1] == '-d')
+
     # Instatiate WarEnvironment with 2 players
     env = WarEnvironment(2)
 
@@ -178,10 +186,11 @@ def main():
     if episodes:
         episode_checkpoint = max(episodes)
 
-        #TODO: check if player1 exists
         player0 = AIPlayer(name='ai0', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth")
-        if os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth"):
+        if (os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth") and not force_random_agent):
             player1 = AIPlayer(name='ai1', load_path=f"models/dqn_model1_episode_{episode_checkpoint}.pth")
+        elif force_train_itself:
+            player1 = AIPlayer(name='ai1', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth")
         else:
             player1 = RandomPlayer(name='ai1')
 

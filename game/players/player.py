@@ -1,4 +1,4 @@
-from game.utils import human_selector
+from game.territories import Territory
 
 class Player:
     def __init__(self, name, color, objective, is_human, godmode):
@@ -8,6 +8,7 @@ class Player:
         self.board = None
         self.territories = []
         self.cards = []
+        self.killed_list = []
         self.last_territory_len = 0
         self.reward_parcel = 0
         self.is_human = is_human
@@ -69,7 +70,7 @@ class Player:
     def prepare_transfer(*args):
         raise NotImplementedError
     
-    def godmode_attack(self, attacker, defender):
+    def godmode_attack(self, attacker: Territory, defender: Territory):
         assert self == attacker
         while True:
             try:
@@ -92,7 +93,7 @@ class Player:
 
             if len(defender.owner.territories) == 0:
                 defender.owner.has_died = True
-
+                attacker.owner.killed_list.append(defender.owner)
             defender.owner = attacker.owner
 
             return True, True

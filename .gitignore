@@ -1,5 +1,6 @@
 __pycache__
 .vscode
+.profile_results.txt
 *.log
 *.zip
 settings.json
