@@ -25,3 +25,6 @@ class WarEnvironment:
     
     def get_match_action_counter(self):
         return self.game.match_action_counter
+
+    def ended_in_objective(self):
+        return self.game.ended_in_objective

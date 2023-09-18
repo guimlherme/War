@@ -39,6 +39,8 @@ class Game:
         self.round_actions = set()
         self.round_action_counter = 0
         self.match_action_counter = 0
+        self.ended_in_objective = False
+        # If you ever modify this, remember to reset it
 
     def setup_players(self):
         players = []
@@ -107,8 +109,10 @@ class Game:
         self.current_card_troop_exchange = 4
         self.current_player_index = 0
         self.current_phase = REINFORCEMENT_PHASE
+        self.round_actions = set()
         self.round_action_counter = 0
         self.match_action_counter = 0
+        self.ended_in_objective = False
 
         return self.get_state(self.current_player)
 
@@ -540,10 +544,18 @@ class Game:
                     if check_win(self.current_player, self.players, self.board):
                         debug_print(f"\nCongratulations! {self.current_player.name} won the game!")
                         self.current_player.has_won = True
+                        self.ended_in_objective = True
+                        for p in self.players:
+                            if p != self.current_player:
+                                p.has_died = True
                         return [None, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
                 else:
                     if simple_check_win(self.current_player, self.players, self.board):
                         self.current_player.has_won = True
+                        self.ended_in_objective = True
+                        for p in self.players:
+                            if p != self.current_player:
+                                p.has_died = True
                         return [None, self.get_state(self.current_player), self.get_last_reward(self.current_player)]
 
                 # Do the reward counting updates

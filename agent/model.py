@@ -7,7 +7,7 @@ import logging
 import cProfile
 
 import torch
-from agent.ai_player import AIPlayer
+from agent.ai_player import AIPlayer, VICTORY_REWARD
 
 from agent.environment import WarEnvironment
 from agent.logger import CustomLogger
@@ -95,8 +95,9 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
             if next_player == current_training:
                 total_reward += reward
                 next_player.replay_buffer.add(state, valid_actions, action, reward, next_state, done, current_player)
-            else:
+            elif done and env.ended_in_objective():
                 # TODO: think about a better logic for this
+                total_reward -= VICTORY_REWARD
                 current_training.replay_buffer.register_loss()
 
             state = next_state
