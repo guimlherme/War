@@ -95,6 +95,9 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
             if next_player == current_training:
                 total_reward += reward
                 next_player.replay_buffer.add(state, valid_actions, action, reward, next_state, done, current_player)
+            else:
+                # TODO: think about a better logic for this
+                current_training.replay_buffer.register_loss()
 
             state = next_state
             current_player = next_player

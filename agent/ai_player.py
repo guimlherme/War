@@ -1,5 +1,7 @@
 import random
 
+from game.war import VICTORY_REWARD
+
 import torch.nn.functional as F
 from agent.state_action_space import action_space, len_state_space
 
@@ -10,7 +12,7 @@ import torch.optim as optim
 # Set constants
 INTERMEDIATE_LAYER_SIZE = 128
 LEARNING_RATE = 1e-6
-MEMORY_CAPACITY = 10000
+MEMORY_CAPACITY = 1000
 
 class ReplayBuffer:
     def __init__(self, capacity):
@@ -19,6 +21,7 @@ class ReplayBuffer:
         self.position = 0
 
     def add(self, state, valid_actions, action, reward, next_state, done, player_id):
+        # If you change this, remember to revise all functions in this class
         data = (state, valid_actions, action, reward, next_state, done, player_id)
         if len(self.buffer) < self.capacity:
             self.buffer.append(data)
@@ -28,6 +31,13 @@ class ReplayBuffer:
 
     def sample(self, batch_size):
         return random.sample(self.buffer, batch_size)
+    
+    def register_loss(self):
+        new_data = list(self.buffer[-1])
+        new_data[3] -= VICTORY_REWARD
+        new_data[5] = True
+        self.buffer[-1] = tuple(new_data)
+
 
     def reset(self):
         self.buffer.clear()
