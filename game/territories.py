@@ -243,7 +243,7 @@ class Board:
         if set(self.continents["europe"]) == set(continent):
             return 5
         if set(self.continents["africa"]) == set(continent):
-            return 4
+            return 3
         if set(self.continents["asia"]) == set(continent):
             return 7
         if set(self.continents["oceania"]) == set(continent):
