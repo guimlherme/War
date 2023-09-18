@@ -123,16 +123,18 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 # Mask out terminal states (where dones is True)
                 non_terminal_states = ~dones_tensor
 
+                max_q_values_next = torch.zeros(BATCH_SIZE, dtype=torch.float32)
                 # Compute the maximum Q-value for each batch element while ignoring invalid actions
-                max_q_values_next = torch.max(q_values_next, dim=1).values
+                for i in range(len(valid_actions)): # Probably it's bettter to keep it in a loop #TODO: test
+                    max_q_values_next[i] = torch.max(q_values_next[i][valid_actions[i]])
 
                 # Update target Q-values for non-terminal states
                 target_q_values[non_terminal_states] += GAMMA * max_q_values_next[non_terminal_states]
 
                 q_values = current_training.dqn_model(states)
-                # q_values_actions = torch.sum(torch.nn.functional.one_hot(torch.tensor(actions), num_actions) * q_values, dim=1)
+
                 q_values_actions = q_values.gather(1, actions_tensor).squeeze()
-                # print(q_values_actions == q_values_actions_2, q_values_actions, q_values_actions_2)
+
                 loss = current_training.loss(q_values_actions, target_q_values)
 
 
@@ -158,7 +160,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
         # Decay Epsilon
         epsilon = max(EPSILON_END, epsilon * EPSILON_DECAY)
 
-        total_reward_msg = (f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}," + 
+        total_reward_msg = (f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}, " + 
                             f"Num actions: {env.get_match_action_counter()}, Epsilon: {epsilon}")
         logger.info(total_reward_msg)
 

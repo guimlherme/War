@@ -14,7 +14,7 @@ with open('training_log.log', 'r') as file:
             episode = int(time_episode_str.split(' ')[4])
             agent = agent_str.split(' ')[1]
             reward = float(reward_str.split(': ')[1])
-            num_action = int(num_actions_str.split(' ')[2])
+            num_action = int(num_actions_str.split(': ')[1])
             episodes.append(episode)
             agents.append(agent)
             rewards.append(reward)
