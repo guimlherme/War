@@ -21,7 +21,9 @@ MAX_ACTIONS_PER_MATCH = 4000
 BASE_REWARD = -0.01 # Base reward is slightly negative to prevent stalling
 CARD_REWARD = 0.8
 TERRITORIAL_CHANGE_FACTOR = 1.0
-VICTORY_REWARD = 100.0
+VICTORY_REWARD = 50.0
+SPEED_FACTOR = 1
+MAX_ROUND_FOR_BONUS = 1.0 * (MAX_ACTIONS_PER_MATCH / MAX_ACTIONS_PER_ROUND)
 
 def roll_dice():
     return random.randint(1, 6)
@@ -40,6 +42,7 @@ class Game:
         self.round_actions = set()
         self.round_action_counter = 0
         self.match_action_counter = 0
+        self.current_round_number = 0 # This counts each individual turn
         self.ended_in_objective = False
         # If you ever modify this, remember to reset it
 
@@ -114,6 +117,7 @@ class Game:
         self.round_actions = set()
         self.round_action_counter = 0
         self.match_action_counter = 0
+        self.current_round_number = 0
         self.ended_in_objective = False
 
         return self.get_state(self.current_player)
@@ -148,7 +152,7 @@ class Game:
             player.has_conquered = False
 
         if player.has_won:
-            reward += VICTORY_REWARD
+            reward += VICTORY_REWARD + max(0, SPEED_FACTOR * (MAX_ROUND_FOR_BONUS - self.current_round_number))
         
         reward += player.reward_parcel
         player.reward_parcel = 0
@@ -477,6 +481,7 @@ class Game:
 
     def change_player(self):
         self.round_action_counter = 0
+        self.current_round_number += 1 # This counts each individual turn
         self.current_player_index = (self.current_player_index + 1) % len(self.players)
         # Make sure that next player is alive
         while self.current_player.has_died:
