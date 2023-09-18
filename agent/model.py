@@ -27,12 +27,15 @@ device = ("cpu")
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(device)
 
+def validate_q_values(env: WarEnvironment, q_values: torch.Tensor) -> torch.Tensor:
+    valid_actions_table = torch.tensor(env.get_valid_actions_table(), dtype=torch.bool).unsqueeze(0)
+    invalid_mask = ~valid_actions_table
+    q_values[invalid_mask] = -float('inf')
+    return q_values
+
 def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
-    q_values_numpy = q_values.cpu().squeeze().numpy()
-    valid_actions_table = np.array(env.get_valid_actions_table())
-    validity_factor = np.where(valid_actions_table, 0, -np.inf)
-    q_values_validated = q_values_numpy + validity_factor
-    return np.argmax(q_values_validated)
+    q_values_validated = validate_q_values(env, q_values)
+    return torch.argmax(q_values_validated)
 
 def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1'), start_episode=0):
 
@@ -71,8 +74,9 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 with torch.no_grad():
                     q_values = current_player.dqn_model(state)
                 action = select_valid_action(env, q_values)
-                if env.game.match_action_counter % 100 == 0: print(current_player.name, 
-                                                                   torch.median(q_values).item(), action)
+                if env.game.match_action_counter % 100 == 0: 
+                    q_values = validate_q_values(env, q_values)
+                    print(current_player.name, torch.max(q_values).item(), action)
                 # action = torch.argmax(q_values).item()
 
             next_player_index, next_state, next_player_reward = env.step(action)
@@ -106,7 +110,8 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 actions_tensor = torch.tensor(actions, dtype=torch.int64).unsqueeze(0)
                 next_states = torch.cat(next_states, dim=0)
 
-                q_values_next = current_training.target_model(next_states)
+                with torch.no_grad():
+                    q_values_next = current_training.target_model(next_states)
 
                 # Initialize target Q-values with rewards
                 target_q_values = rewards_tensor.clone()
