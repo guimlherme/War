@@ -1,6 +1,19 @@
 
 DEBUG_FLAG = False
 
+def bool_human_selector(message):
+    while True:
+        try:
+            bool_input = input(message)
+            if bool_input == '1':
+                return True
+            elif bool_input == '0':
+                return False
+            else:
+                raise ValueError
+        except ValueError:
+            debug_print("\nTry again")
+
 def human_selector(choice_list, initial_phrase, selection_phrase, allow_zero):
     if len(choice_list) == 0:
         print("Empty possibility list")

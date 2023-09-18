@@ -24,16 +24,18 @@ Attacks will run until conquered or can't proceed. Transfers will happen with al
 """
 
 # This constant isn't important anymore, as the AI can't choose invalid actions
-BAD_SELECTION_PENALTY = -0
+BAD_SELECTION_PENALTY = None # This should raise an error every time, the AI can't select a bad action
+AI_TROOP_SELECTION_FACTOR = 0.2 # fraction of the total troops used per action
 
 from game.players.player import Player
 from game.utils import debug_print
 
+from math import ceil
 import random
 
 class AIPlayer(Player):
     def __init__(self, name, color, objective, godmode=False):
-        super().__init__(name, color, objective, is_human=False ,godmode=godmode)
+        super().__init__(name, color, objective, is_human=False, godmode=godmode)
         self.action = None # Remember to reset this to None after using
 
     def get_action(self):
@@ -66,7 +68,7 @@ class AIPlayer(Player):
             self.reward_parcel += BAD_SELECTION_PENALTY
             return
 
-        num_troops = 1 # Place one by one
+        num_troops = ceil(self.remaining_troops_to_place * AI_TROOP_SELECTION_FACTOR)
         remaining_troops = troops_to_place
 
         if selected_territory not in self.territories:

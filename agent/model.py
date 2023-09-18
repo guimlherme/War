@@ -17,7 +17,7 @@ from agent.random_player import RandomPlayer
 BATCH_SIZE = 32
 GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
 EPSILON_START = 1.0
-EPSILON_END = 1.0
+EPSILON_END = 0.01
 EPSILON_DECAY = 0.995
 TARGET_UPDATE_FREQUENCY = 5 # Must be odd to save both models
 EPISODES = 10000
@@ -215,7 +215,7 @@ def main():
             else:
                 players.append(RandomPlayer(name=f'ai_{i}'))
 
-        dqn_learning(env, players, start_episode=episode_checkpoint)
+        dqn_learning(env, players, start_episode=(episode_checkpoint+1))
     
     else:
         episode_checkpoint = 0
@@ -224,12 +224,12 @@ def main():
         for i in range(num_players):
             if i==0:
                 players.append(AIPlayer(name='ai_0'))
-            if i==1 and force_train_itself:
+            elif i==1 and force_train_itself:
                 players.append(AIPlayer(name='ai_1'))
             else:
                 players.append(RandomPlayer(name=f'ai_{i}'))
 
-        dqn_learning(env, players, start_episode=episode_checkpoint)
+        dqn_learning(env, players, start_episode=(episode_checkpoint+1))
 
 if __name__ == "__main__":
     main()

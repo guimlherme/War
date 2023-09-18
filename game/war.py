@@ -1,12 +1,13 @@
 import os
 import random
+from math import ceil
 from typing import List
 from game.players.player import Player
 from game.players.human_player import HumanPlayer
-from game.players.ai_player import AIPlayer
+from game.players.ai_player import AIPlayer, AI_TROOP_SELECTION_FACTOR
 
 from game.territories import Board, Territory, TerritoryCard
-from game.utils import human_selector, debug_print
+from game.utils import human_selector, debug_print, bool_human_selector
 from game.win_conditions import check_win, simple_check_win, objectives
 import numpy as np
 
@@ -283,34 +284,48 @@ class Game:
         """
         # Check if the player is in godmode and controls the results of the attacks
         if attacker.owner.godmode:
-            attacker.owner.godmode_attack(attacker, defender)
+            return attacker.owner.godmode_attack(attacker, defender)
         
-        # Simulate dice rolls and determine the outcome of the battle
-        attacker_dice = [roll_dice() for _ in range(min(attacker.troops - 1, 3))]
-        defender_dice = [roll_dice() for _ in range(min(defender.troops, 3))]
+        initial_attacker_troops = attacker.troops
+        while True:
+            # Simulate dice rolls and determine the outcome of the battle
+            attacker_dice = [roll_dice() for _ in range(min(attacker.troops - 1, 3))]
+            defender_dice = [roll_dice() for _ in range(min(defender.troops, 3))]
 
-        attacker_dice.sort(reverse=True)
-        defender_dice.sort(reverse=True)
+            attacker_dice.sort(reverse=True)
+            defender_dice.sort(reverse=True)
 
-        debug_print(f"{attacker.owner.name} rolled: {attacker_dice}")
-        debug_print(f"{defender.owner.name} rolled: {defender_dice}")
+            debug_print(f"{attacker.owner.name} rolled: {attacker_dice}")
+            debug_print(f"{defender.owner.name} rolled: {defender_dice}")
 
-        # Compare the dice rolls to decide the battle result
-        while attacker_dice and defender_dice:
-            if attacker_dice[0] > defender_dice[0]:
-                defender.troops -= 1
+            # Compare the dice rolls to decide the battle result
+            while attacker_dice and defender_dice:
+                if attacker_dice[0] > defender_dice[0]:
+                    defender.troops -= 1
+                else:
+                    attacker.troops -= 1
+                attacker_dice.pop(0)
+                defender_dice.pop(0)
+
+            if defender.troops <= 0:
+                self.conquer_territory(attacker, defender)
+                debug_print(f"{attacker.name} won the battle and conquered {defender.name}!")
+                return True, True #TODO: refactor this logic
+            elif attacker.troops <= 1:
+                if attacker.troops <= 0: raise ValueError("Attacker ended up with 0 troops")
+                debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
+                return False, True
             else:
-                attacker.troops -= 1
-            attacker_dice.pop(0)
-            defender_dice.pop(0)
+                if attacker.owner.is_human:
+                    continue_attacking = bool_human_selector("Do you wish to continue attacking? 0=no, 1=yes")
+                else:
+                    continue_attacking = (attacker.troops >= (1-AI_TROOP_SELECTION_FACTOR) * initial_attacker_troops )
 
-        if defender.troops <= 0:
-            self.conquer_territory(attacker, defender)
-            debug_print(f"{attacker.name} won the battle and conquered {defender.name}!")
-            return True, True #TODO: refactor this logic
-        else:
-            debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
-            return False, True
+                if continue_attacking:
+                    continue
+                else:
+                    debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
+                    return False, True
 
     def get_player_by_name(self, name):
         for player in self.players:
@@ -362,7 +377,7 @@ class Game:
 
         return 0
 
-    def reinforce(self, player):
+    def reinforce_by_cards(self, player):
         troops_to_reinforce = self.exchange_cards_for_troops(player)
         if not troops_to_reinforce:
             return 0
@@ -385,21 +400,12 @@ class Game:
         round_base_placement = len(player.territories) // 2
 
         reinforce_num_troops = 0
-        while True:
-            if not player.is_human:
-                reinforce_num_troops = self.reinforce(player)
-                break
-            try:
-                bool_reinforce = input("Do you want to exchange your cards, if possible? 0=no, 1=yes ")
-                if bool_reinforce == '1':
-                    self.reinforce(player)
-                    break
-                elif bool_reinforce == '0':
-                    break
-                else:
-                    raise ValueError
-            except ValueError:
-                debug_print("\nTry again")
+        if not player.is_human:
+            reinforce_num_troops = self.reinforce_by_cards(player)
+        else:
+            bool_reinforce = bool_human_selector("Do you want to exchange your cards, if possible? 0=no, 1=yes ")
+            if bool_reinforce:
+                self.reinforce_by_cards(player)
         
         player.remaining_troops_to_place = round_base_placement + reinforce_num_troops
 
@@ -415,6 +421,7 @@ class Game:
             player (Player): player that will be attacking
 
         Returns:
+            #TODO: This is simply outrageous, but works
             The tuple (attack_success, continue_attacking)
             attack_success indicates if the attack was successful, and
             continue_attacking indicates if another attack prompt will be issued
@@ -449,7 +456,7 @@ class Game:
 
         return self.transfer_troops(giver_territory, receiver_territory)
 
-    def transfer_troops(self, giver_territory, receiver_territory):
+    def transfer_troops(self, giver_territory: Territory, receiver_territory: Territory):
 
         # TODO: implement a rule such that the same troop can't be transfered twice in the same turn
         max_transferable_troops = giver_territory.troops - 1
@@ -457,9 +464,10 @@ class Game:
         if giver_territory.owner.is_human:
             transfered_troops = input(f"\n{giver_territory.owner.name}, choose a number of troops to transfer (between 1 and {max_transferable_troops}): ")
             transfered_troops = int(transfered_troops)
-            transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
         else:
-            transfered_troops = 1
+            transfered_troops = ceil(AI_TROOP_SELECTION_FACTOR * giver_territory.troops)
+
+        transfered_troops = min(max(1, transfered_troops), max_transferable_troops)
 
         debug_print(f"\nTransfered troops:{transfered_troops}")
 
