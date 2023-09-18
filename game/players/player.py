@@ -1,7 +1,7 @@
 from game.utils import human_selector
 
 class Player:
-    def __init__(self, name, color, objective):
+    def __init__(self, name, color, objective, is_human, godmode):
         self.name = name
         self.color = color
         self.objective = objective
@@ -10,6 +10,8 @@ class Player:
         self.cards = []
         self.last_territory_len = 0
         self.reward_parcel = 0
+        self.is_human = is_human
+        self.godmode = godmode
         self.has_died = False
         self.has_conquered = False
         self.has_won = False
@@ -60,4 +62,43 @@ class Player:
     def place_troops(*args):
         # Should be implemented in child classes
         raise NotImplementedError
+    
+    def prepare_attack(*args):
+        raise NotImplementedError
+    
+    def prepare_transfer(*args):
+        raise NotImplementedError
+    
+    def godmode_attack(self, attacker, defender):
+        assert self == attacker
+        while True:
+            try:
+                print("Did the attack succeed? 0=False, 1=True")
+                succeed = bool(int(input()))
+                print("Type in the final number of troops in the attacker territory:")
+                attacker_final_troops = int(input())
+                print("Type in the final number of troops in the defender territory:")
+                defender_final_troops = int(input())
+                break
+            except:
+                print("Try Again")
+        
+        attacker.troops = attacker_final_troops
+        defender.troops = defender_final_troops
+
+        if succeed:
+            defender.owner.remove_territory(defender)
+            attacker.owner.add_territory(defender)
+
+            if len(defender.owner.territories) == 0:
+                defender.owner.has_died = True
+
+            defender.owner = attacker.owner
+
+            return True, True
+        
+        else:
+            return False, True
+
+        
     

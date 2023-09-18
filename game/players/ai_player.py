@@ -32,9 +32,8 @@ from game.utils import debug_print
 import random
 
 class AIPlayer(Player):
-    def __init__(self, name, color, objective):
-        super().__init__(name, color, objective)
-        self.is_human = False
+    def __init__(self, name, color, objective, godmode=False):
+        super().__init__(name, color, objective, is_human=False ,godmode=godmode)
         self.action = None # Remember to reset this to None after using
 
     def get_action(self):

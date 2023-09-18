@@ -4,9 +4,8 @@ from game.utils import human_selector, debug_print
 import random
 
 class HumanPlayer(Player):
-    def __init__(self, name, color, objective):
-        super().__init__(name, color, objective)
-        self.is_human = True
+    def __init__(self, name, color, objective, godmode=False):
+        super().__init__(name, color, objective, is_human=True, godmode=godmode)
 
     def get_state():
         return None

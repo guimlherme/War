@@ -271,6 +271,10 @@ class Game:
             attack_success indicates if the attack was successful, and
             continue_attacking indicates if another attack prompt will be issued
         """
+        # Check if the player is in godmode and controls the results of the attacks
+        if attacker.owner.godmode:
+            attacker.owner.godmode_attack(attacker, defender)
+        
         # Simulate dice rolls and determine the outcome of the battle
         attacker_dice = [roll_dice() for _ in range(min(attacker.troops - 1, 3))]
         defender_dice = [roll_dice() for _ in range(min(defender.troops, 3))]
@@ -293,7 +297,7 @@ class Game:
         if defender.troops <= 0:
             self.conquer_territory(attacker, defender)
             debug_print(f"{attacker.name} won the battle and conquered {defender.name}!")
-            return True, True
+            return True, True #TODO: refactor this logic
         else:
             debug_print(f"{defender.name} successfully defended against {attacker.name}'s attack!")
             return False, True
