@@ -63,6 +63,7 @@ class Game:
             for i in range(self.num_players):
                 player_name = f"ai_{i}"
                 color = random.choice(colors)
+                colors.remove(color)
                 objective = random.choice(objectives_list)
                 objectives_list.remove(objective)
                 players.append(AIPlayer(player_name, color, objective))
