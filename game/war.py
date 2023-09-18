@@ -154,45 +154,45 @@ class Game:
     def get_match_action_counter(self):
         return self.match_action_counter
 
-    def get_valid_actions_from_state(self, state):
-        #FIXME
-        current_phase = state[0]
-        current_player = 0
-        territories = state[1:]
-        owners = []
-        num_troops = []
-        for territory_i in range(0, len(territories), 2):
-            owners.append(territories[territory_i])
-            num_troops.append(territories[territory_i + 1])
+    # def get_valid_actions_from_state(self, state):
+    #     #FIXME
+    #     current_phase = state[0]
+    #     current_player = 0
+    #     territories = state[1:]
+    #     owners = []
+    #     num_troops = []
+    #     for territory_i in range(0, len(territories), 2):
+    #         owners.append(territories[territory_i])
+    #         num_troops.append(territories[territory_i + 1])
 
-        if current_phase == 0:
-            actions_table = [False] # Passing isn't an option
-        else:
-            actions_table = [True] # Passing is an option
+    #     if current_phase == 0:
+    #         actions_table = [False] # Passing isn't an option
+    #     else:
+    #         actions_table = [True] # Passing is an option
         
-        for i, territory in enumerate(self.board):
-            if current_phase == REINFORCEMENT_PHASE:
-                if owners[i] == current_player: # If current player is the owner
-                    actions_table.append(True)
-                else:
-                    actions_table.append(False)
-            elif current_phase == ATTACK_PHASE:
-                if owners[i] == current_player:
-                    actions_table.append(False)
-                else:
-                    if any([(owners[n.index] == current_player and num_troops[n.index] >= 2) for n in territory.neighbors]):
-                        actions_table.append(True)
-                    else:
-                        actions_table.append(False)
-            elif current_phase == TRANSFER_PHASE:
-                if owners[i] != current_player:
-                    actions_table.append(False)
-                else:
-                    if any([(owners[n.index] == current_player and num_troops[n.index] >= 2) for n in territory.neighbors]):
-                        actions_table.append(True)
-                    else:
-                        actions_table.append(False)
-        return actions_table
+    #     for i, territory in enumerate(self.board):
+    #         if current_phase == REINFORCEMENT_PHASE:
+    #             if owners[i] == current_player: # If current player is the owner
+    #                 actions_table.append(True)
+    #             else:
+    #                 actions_table.append(False)
+    #         elif current_phase == ATTACK_PHASE:
+    #             if owners[i] == current_player:
+    #                 actions_table.append(False)
+    #             else:
+    #                 if any([(owners[n.index] == current_player and num_troops[n.index] >= 2) for n in territory.neighbors]):
+    #                     actions_table.append(True)
+    #                 else:
+    #                     actions_table.append(False)
+    #         elif current_phase == TRANSFER_PHASE:
+    #             if owners[i] != current_player:
+    #                 actions_table.append(False)
+    #             else:
+    #                 if any([(owners[n.index] == current_player and num_troops[n.index] >= 2) for n in territory.neighbors]):
+    #                     actions_table.append(True)
+    #                 else:
+    #                     actions_table.append(False)
+    #     return actions_table
 
 
     def get_valid_actions_table(self):

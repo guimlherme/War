@@ -13,8 +13,8 @@ class WarEnvironment:
     def step(self, action, current_player_index=None):
         return self.game.play_round(action=action_space[action])
     
-    def get_valid_actions_from_state(self, state):
-        return self.game.get_valid_actions_from_state(state)
+    # def get_valid_actions_from_state(self, state):
+    #     return self.game.get_valid_actions_from_state(state)
 
     def get_valid_actions_table(self):
         return self.game.get_valid_actions_table()
