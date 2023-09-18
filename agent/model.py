@@ -5,87 +5,25 @@ import logging
 import cProfile
 
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
+from agent.ai_player import AIPlayer
 
 from agent.environment import WarEnvironment
-from agent.state_action_space import len_state_space, action_space
 from agent.logger import CustomLogger
 from agent.random_player import RandomPlayer
 
-# Set constants
-INTERMEDIATE_LAYER_SIZE = 128
 BATCH_SIZE = 32
 GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
-LEARNING_RATE = 1e-6
 EPSILON_START = 1.0
-EPSILON_END = 0.01
+EPSILON_END = 0.1
 EPSILON_DECAY = 0.995
 TARGET_UPDATE_FREQUENCY = 4 # Must be odd to save both models
-MEMORY_CAPACITY = 1000
-EPISODES = 1000
+EPISODES = 10000
 SAVE_MODEL_FREQUENCY = 5
 
 device = ("cpu")
 # Uncomment next line to activate GPU support
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(device)
-
-class DQNModel(nn.Module):
-    def __init__(self, input_size, num_actions):
-        super(DQNModel, self).__init__()
-        self.fc1 = nn.Linear(input_size, INTERMEDIATE_LAYER_SIZE)
-        self.fc2 = nn.Linear(INTERMEDIATE_LAYER_SIZE, INTERMEDIATE_LAYER_SIZE)
-        self.q_values = nn.Linear(INTERMEDIATE_LAYER_SIZE, num_actions)
-
-    def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        return self.q_values(x)
-
-class ReplayBuffer:
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.buffer = []
-        self.position = 0
-
-    def add(self, state, valid_actions, action, reward, next_state, done, player_id):
-        data = (state, valid_actions, action, reward, next_state, done, player_id)
-        if len(self.buffer) < self.capacity:
-            self.buffer.append(data)
-        else:
-            self.buffer[self.position] = data
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        return random.sample(self.buffer, batch_size)
-    
-    def reset(self):
-        self.buffer.clear()
-
-    def __len__(self):
-        return len(self.buffer)
-
-class AIPlayer:
-    def __init__(self, name='ai', load_path=None):
-        # NN size adjustment
-        input_size = len_state_space
-        num_actions = len(action_space)
-
-        # Initialize DQN and Target Network
-
-        self.name = name
-        self.type = 'dqn_agent'
-        self.dqn_model = DQNModel(input_size, num_actions)
-        if load_path:
-            self.dqn_model.load_state_dict(torch.load(load_path))
-        self.target_model = DQNModel(input_size, num_actions)
-        self.target_model.load_state_dict(self.dqn_model.state_dict())
-
-        self.optimizer = optim.AdamW(self.dqn_model.parameters(), lr=LEARNING_RATE)
-        self.replay_buffer = ReplayBuffer(MEMORY_CAPACITY)
-        self.loss = nn.SmoothL1Loss()
 
 def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
     q_values_numpy = q_values.cpu().squeeze().numpy()
@@ -94,8 +32,10 @@ def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
     q_values_validated = q_values_numpy + validity_factor
     return np.argmax(q_values_validated)
 
-
 def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1'), start_episode=0):
+
+    print('player0: ', type(player0))
+    print('player1: ', type(player0))
 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
@@ -103,7 +43,6 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
     if isinstance(player0, AIPlayer): player0.replay_buffer.reset()
     if isinstance(player1, AIPlayer): player1.replay_buffer.reset()
 
-    num_actions = len(action_space)
     epsilon = max(EPSILON_END, EPSILON_START * (EPSILON_DECAY ** start_episode))
     for episode in range(start_episode, EPISODES):
         
@@ -111,8 +50,8 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
         state = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
         done = False
         total_reward = 0
-        current_training = player0 # Train only one agent
-        # current_training = player0 if episode % 2 == 0 else player1 
+        # current_training = player0 # Train only one agent
+        current_training = player0 if episode % 20 < 10 else player1 # Change training agent every 10 rounds
         current_player = player0
 
         while not done:
@@ -232,7 +171,7 @@ if __name__ == "__main__":
     if episodes:
         episode_checkpoint = max(episodes)
 
-        #TODO: chech if player1 exists
+        #TODO: check if player1 exists
         player0 = AIPlayer(name='ai0', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth")
         if os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth"):
             player1 = AIPlayer(name='ai1', load_path=f"models/dqn_model1_episode_{episode_checkpoint}.pth")
