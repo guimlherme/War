@@ -207,7 +207,7 @@ def main():
         for i in range(num_players):
             if i == 0:
                 players.append(AIPlayer(name='ai_0', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth"))
-            if (i == 1 and (os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth") 
+            elif (i == 1 and (os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth") 
                             and not force_random_agent)):
                 players.append(AIPlayer(name='ai_1', load_path=f"models/dqn_model1_episode_{episode_checkpoint}.pth"))
             elif i == 1 and force_train_itself:
