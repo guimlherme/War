@@ -7,7 +7,7 @@ from agent.state_action_space import len_state_space, action_space
 
 import torch
 
-EPISODES = 5
+EPISODES = 10
 
 def test_model(env, player0, player1):
     for episode in range(EPISODES):
@@ -47,11 +47,11 @@ def test_model(env, player0, player1):
             current_player = next_player
 
         territories_owners = state[0][1::2]
-        current_player_number = 0 if current_player==player0 else 1
-        other_player_number = 1 if current_player==player0 else 0
+        current_player_numbers = [0] if current_player==player0 else [1,2]
+        other_player_numbers = [1,2] if current_player==player0 else [0]
 
-        player0_territories = len([t for t in territories_owners if t==current_player_number])
-        player1_territories = len([t for t in territories_owners if t==other_player_number])
+        player0_territories = len([t for t in territories_owners if t in current_player_numbers])
+        player1_territories = len([t for t in territories_owners if t in other_player_numbers])
         print(state, player0_territories, player1_territories)
         
         total_reward_msg_0 = f"Episode {episode}, Agent {player0.name}, Total Reward: {total_reward_0}"
@@ -64,7 +64,7 @@ if __name__ == "__main__":
 
     # Define loaded model path
     model0_episode = 1855
-    model1_episode = 1000
+    model1_episode = 1855
 
     base_path = os.getcwd()
 

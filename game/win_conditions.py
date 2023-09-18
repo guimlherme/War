@@ -1,9 +1,10 @@
 from typing import Callable
 
 class Objective:
-    def __init__(self, id: int, check_function: Callable, description: str):
+    def __init__(self, id: int, check_function: Callable, target: str, description: str):
         self.id = id
         self.check_function = check_function
+        self.target = target
         self.description = description
 
 # Conquistar na totalidade a EUROPA, a board.continents["oceania"] e mais um terceiro.
@@ -79,7 +80,6 @@ def objective_nine(player, colors, board):
     
     if len(colors['Azul'].territories) == 0:
         return True
-
 
 
 def objective_ten(player, colors, board):
@@ -171,7 +171,24 @@ objectives_id = {
     objective_fourteen: 13
 }
 
-objectives = [Objective(objectives_id[f], f, objectives_descriptions[f]) for f in objectives_functions]
+target_colors = {
+    objective_one: None,
+    objective_two: None,
+    objective_three: None,
+    objective_four: None,
+    objective_five: None,
+    objective_six: None,
+    objective_seven: None,
+    objective_eight: None,
+    objective_nine: 'Azul',
+    objective_ten: 'Amarelo',
+    objective_eleven: 'Vermelho',
+    objective_twelve: 'Cinza',
+    objective_thirteen: 'Roxo',
+    objective_fourteen: 'Verde',
+}
+
+objectives = [Objective(objectives_id[f], f, target_colors[f], objectives_descriptions[f]) for f in objectives_functions]
 
 
 def check_win(current_player, players, board):

@@ -40,7 +40,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
     if isinstance(player1, AIPlayer): player1.dqn_model.to(device)
 
     print('player0: ', type(player0))
-    print('player1: ', type(player0))
+    print('player1: ', type(player1))
 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
@@ -195,11 +195,15 @@ def main():
             player1 = RandomPlayer(name='ai1')
 
         dqn_learning(env, player0, player1, start_episode=episode_checkpoint)
+    
     else:
         episode_checkpoint = 0
 
         player0 = AIPlayer(name='ai0')
-        player1 = RandomPlayer(name='ai1')
+        if force_train_itself:
+            player1 =  AIPlayer(name='ai1')
+        else:
+            player1 = RandomPlayer(name='ai1')
 
         dqn_learning(env, player0, player1, start_episode=episode_checkpoint)
 

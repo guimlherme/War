@@ -21,10 +21,15 @@ class Player:
     def set_board(self, board):
         self.board = board
 
-    def players_dict(self, player):
+    def players_dict(self, player: 'Player'):
         # Attributes a number to each player based on this player's referential
-        # For now, it's only 0=me, 1=others
-        return 0 if player==self else 1
+        # The map is 0=me, 1=others, 2=objective_target
+        if player==self:
+            return 0
+        elif self.objective.target == player.color:
+            return 2
+        else:
+            return 1
     
     def calculate_territory_change(self):
         if self.last_territory_len == 0:
