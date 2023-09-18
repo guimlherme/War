@@ -22,3 +22,6 @@ class WarEnvironment:
     def get_valid_actions_indexes(self):
         valid_actions_table = self.get_valid_actions_table()
         return [i for i in range(len(valid_actions_table)) if valid_actions_table[i] == True]
+    
+    def get_match_action_counter(self):
+        return self.game.match_action_counter

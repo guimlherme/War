@@ -151,6 +151,9 @@ class Game:
 
         return reward
 
+    def get_match_action_counter(self):
+        return self.match_action_counter
+
     def get_valid_actions_from_state(self, state):
         #FIXME
         current_phase = state[0]
@@ -493,6 +496,9 @@ class Game:
             if self.current_player.remaining_troops_to_place == 0:
                 self.start_round(self.current_player)
             remaining_troops_to_place = self.reinforcement_phase(self.current_player)
+
+            if remaining_troops_to_place < 0:
+                raise ValueError('Negative remaining troops to place')
 
             if remaining_troops_to_place == 0:
                 debug_print(f"\n--- {self.current_player.name}'s Turn ---")

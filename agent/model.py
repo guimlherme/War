@@ -154,7 +154,8 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
         # Decay Epsilon
         epsilon = max(EPSILON_END, epsilon * EPSILON_DECAY)
 
-        total_reward_msg = f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}, Epsilon: {epsilon}"
+        total_reward_msg = (f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward}," + 
+                            f"Num actions: {env.get_match_action_counter()}, Epsilon: {epsilon}")
         logger.info(total_reward_msg)
 
         # Save the DQN models after some episodes

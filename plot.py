@@ -4,18 +4,21 @@ import matplotlib.pyplot as plt
 episodes = []
 agents = []
 rewards = []
+num_actions = []
 
 # Read data from the log.log file
 with open('training_log.log', 'r') as file:
     for line in file:
         if 'Episode' in line and 'Total Reward' in line:
-            time_episode_str, agent_str, reward_str, epsilon_str = line.split(', ')
+            time_episode_str, agent_str, reward_str, num_actions_str, epsilon_str = line.split(', ')
             episode = int(time_episode_str.split(' ')[4])
             agent = agent_str.split(' ')[1]
             reward = float(reward_str.split(': ')[1])
+            num_action = int(num_actions_str.split(' ')[2])
             episodes.append(episode)
             agents.append(agent)
             rewards.append(reward)
+            num_actions.append(num_action)
 
 window_size = 10
 
