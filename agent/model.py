@@ -16,7 +16,7 @@ GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
 EPSILON_START = 1.0
 EPSILON_END = 0.1
 EPSILON_DECAY = 0.995
-TARGET_UPDATE_FREQUENCY = 4 # Must be odd to save both models
+TARGET_UPDATE_FREQUENCY = 5 # Must be odd to save both models
 EPISODES = 10000
 SAVE_MODEL_FREQUENCY = 5
 
@@ -33,6 +33,9 @@ def select_valid_action(env: WarEnvironment, q_values: torch.Tensor):
     return np.argmax(q_values_validated)
 
 def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = AIPlayer(name='ai1'), start_episode=0):
+
+    player0.dqn_model.to(device)
+    player1.dqn_model.to(device)
 
     print('player0: ', type(player0))
     print('player1: ', type(player0))
@@ -94,20 +97,25 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 batch = current_training.replay_buffer.sample(BATCH_SIZE)
                 states, valid_actions, actions, rewards, next_states, dones, player_ids = zip(*batch)
 
-                states = torch.cat(next_states, dim=0)
+                states = torch.cat(states, dim=0)
+                rewards_tensor = torch.tensor(rewards, dtype=torch.float32)
+                dones_tensor = torch.tensor(dones, dtype=torch.bool)
                 actions_tensor = torch.tensor(actions, dtype=torch.int64).unsqueeze(0)
                 next_states = torch.cat(next_states, dim=0)
 
                 q_values_next = current_training.target_model(next_states)
 
-                # Get the target Q-values based on the rewards and next states
-                target_q_values = torch.zeros(BATCH_SIZE, dtype=torch.float32)
-                for i in range(BATCH_SIZE):
-                    if dones[i]:
-                        target_q_values[i] = rewards[i]
-                    else:
-                        # target_q_values[i] = rewards[i] + GAMMA * q_values_next[i][valid_actions[i]]
-                        target_q_values[i] = rewards[i] + GAMMA * torch.max(q_values_next[i][valid_actions[i]])
+                # Initialize target Q-values with rewards
+                target_q_values = rewards_tensor.clone()
+
+                # Mask out terminal states (where dones is True)
+                non_terminal_states = ~dones_tensor
+
+                # Compute the maximum Q-value for each batch element while ignoring invalid actions
+                max_q_values_next = torch.max(q_values_next, dim=1).values
+
+                # Update target Q-values for non-terminal states
+                target_q_values[non_terminal_states] += GAMMA * max_q_values_next[non_terminal_states]
 
                 q_values = current_training.dqn_model(states)
                 # q_values_actions = torch.sum(torch.nn.functional.one_hot(torch.tensor(actions), num_actions) * q_values, dim=1)
@@ -156,8 +164,7 @@ def dqn_learning(env: WarEnvironment, player0 = AIPlayer(name='ai0'), player1 = 
                 model_checkpoint_path2 = os.path.join(model_checkpoint_folder, f"dqn_model1_episode_{episode}.pth")
                 torch.save(player1.dqn_model.state_dict(), model_checkpoint_path2)
 
-
-if __name__ == "__main__":
+def main():
     # Instatiate WarEnvironment with 2 players
     env = WarEnvironment(2)
 
@@ -186,3 +193,6 @@ if __name__ == "__main__":
         player1 = RandomPlayer(name='ai1')
 
         dqn_learning(env, player0, player1, start_episode=episode_checkpoint)
+
+if __name__ == "__main__":
+    main()
