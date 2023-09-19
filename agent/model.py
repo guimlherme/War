@@ -94,23 +94,21 @@ def dqn_learning(env: WarEnvironment, players: List[Union[AIPlayer, RandomPlayer
 
             next_state = torch.tensor(next_state, dtype=torch.float32).unsqueeze(0)
             reward = next_player_reward
+            state = next_state
+            current_player = next_player
             
             # print(f"Action: phase: {state[0][0]}, player: {current_player}, target: {action_space[action]}, reward: {reward} ")
             # Add experience to the agent's replay buffer
             if next_player == current_training:
-                # Don't use state variable anywhere here, because it's from another player
-                if current_training_last_state:
+                if current_training_last_state is not None:
                     total_reward += reward
-                    assert current_training_last_state[1] == next_state[1] # Objective shouldn't change
+                    assert current_training_last_state[0][1] == next_state[0][1] # Objective shouldn't change
                     next_player.replay_buffer.add(current_training_last_state, valid_actions, action, reward, next_state, done, current_player)
                 current_training_last_state = next_state
             elif done and env.ended_in_objective():
                 # TODO: think about a better logic for this
                 total_reward -= VICTORY_REWARD
                 current_training.replay_buffer.register_loss()
-
-            state = next_state
-            current_player = next_player
 
             # Train the DQN model
             if len(current_training.replay_buffer) >= BATCH_SIZE:
