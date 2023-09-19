@@ -67,6 +67,7 @@ def dqn_learning(env: WarEnvironment, players: List[Union[AIPlayer, RandomPlayer
         
         starting_player = random.randrange(num_players)
         current_player = players[starting_player]
+        current_training_last_state = None
 
         while not done:
             # Epsilon-Greedy Exploration
@@ -97,8 +98,12 @@ def dqn_learning(env: WarEnvironment, players: List[Union[AIPlayer, RandomPlayer
             # print(f"Action: phase: {state[0][0]}, player: {current_player}, target: {action_space[action]}, reward: {reward} ")
             # Add experience to the agent's replay buffer
             if next_player == current_training:
-                total_reward += reward
-                next_player.replay_buffer.add(state, valid_actions, action, reward, next_state, done, current_player)
+                # Don't use state variable anywhere here, because it's from another player
+                if current_training_last_state:
+                    total_reward += reward
+                    assert current_training_last_state[1] == next_state[1] # Objective shouldn't change
+                    next_player.replay_buffer.add(current_training_last_state, valid_actions, action, reward, next_state, done, current_player)
+                current_training_last_state = next_state
             elif done and env.ended_in_objective():
                 # TODO: think about a better logic for this
                 total_reward -= VICTORY_REWARD
