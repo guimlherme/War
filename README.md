@@ -4,11 +4,17 @@ This is an semi-complete version of the 'War' game (brazilian version of Risk).
 
 A Deep Q-Learning agent was also implemented to train in this environment
 
-## How to play
+## Playing the game
+
+To run the game without AI:
 
 ```bash
 python -m game.war
 ```
+
+A debug flag can be set in utils.py to print some information.
+
+The game can also be played in <https://wargrow.com.br/>
 
 ## Rules
 

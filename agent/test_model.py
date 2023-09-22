@@ -1,5 +1,6 @@
 import os
 from agent.ai_player import AIPlayer
+from agent.random_player import RandomPlayer
 
 from agent.environment import WarEnvironment
 from agent.model import select_valid_action
@@ -46,7 +47,7 @@ def test_model(env, player0, player1):
             state = next_state
             current_player = next_player
 
-        territories_owners = state[0][1::2]
+        territories_owners = state[0][2::2]
         current_player_numbers = [0] if current_player==player0 else [1,2]
         other_player_numbers = [1,2] if current_player==player0 else [0]
 
@@ -63,8 +64,8 @@ def test_model(env, player0, player1):
 if __name__ == "__main__":
 
     # Define loaded model path
-    model0_episode = 1855
-    model1_episode = 1855
+    model0_episode = 5
+    model1_episode = 1455
 
     base_path = os.getcwd()
 
@@ -72,11 +73,15 @@ if __name__ == "__main__":
     model1_path = os.path.join(base_path, f'models/dqn_model0_episode_{model1_episode}.pth')
 
     # Instatiate WarEnvironment with 2 players
-    env = WarEnvironment(2)
+    env = WarEnvironment(5)
 
     # Instantiate AI players and load trained parameters
-    player0 = AIPlayer('ai0')
-    player1 = AIPlayer('ai1')
+    player0 = AIPlayer('ai_0')
+    if os.path.exists(model1_path):
+        player1 = AIPlayer('ai1')
+    else:
+        player1 = RandomPlayer('ai_1')
+
 
     player0.dqn_model.load_state_dict(torch.load(model0_path))
     player1.dqn_model.load_state_dict(torch.load(model1_path))

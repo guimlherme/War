@@ -23,8 +23,16 @@ class WarEnvironment:
         valid_actions_table = self.get_valid_actions_table()
         return [i for i in range(len(valid_actions_table)) if valid_actions_table[i] == True]
     
+    def get_valid_actions_table_and_indexes(self):
+        valid_actions_table = self.game.get_valid_actions_table()
+        valid_actions_indexes = [i for i in range(len(valid_actions_table)) if valid_actions_table[i] == True]
+        return valid_actions_table, valid_actions_indexes
+    
     def get_match_action_counter(self):
         return self.game.match_action_counter
 
     def ended_in_objective(self):
         return self.game.ended_in_objective
+    
+    def player_has_died(self, player_index):
+        return self.game.players[player_index].has_died
