@@ -1,3 +1,3 @@
-from agent.model import main
+from agent.train_model import main
 
 main()

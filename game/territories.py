@@ -157,6 +157,7 @@ class Board:
         add_edge(Omsk, Dudinka)
         add_edge(Omsk, Aral)
         add_edge(Omsk, Mongolia)
+        # add_edge(Omsk, China)
         add_edge(Dudinka, Siberia)
         add_edge(Dudinka, Tchita)
         add_edge(Dudinka, Mongolia)

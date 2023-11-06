@@ -19,11 +19,13 @@ MAX_ACTIONS_PER_ROUND = 40
 MAX_ACTIONS_PER_MATCH = 4000
 
 BASE_REWARD = -0.01 # Base reward is slightly negative to prevent stalling
-CARD_REWARD = 0.8
+CARD_REWARD = 0.5
 TERRITORIAL_CHANGE_FACTOR = 1.0
 VICTORY_REWARD = 50.0
-SPEED_FACTOR = 1
-MAX_ROUND_FOR_BONUS = 1.0 * (MAX_ACTIONS_PER_MATCH / MAX_ACTIONS_PER_ROUND)
+SPEED_FACTOR = 1.0
+MAX_ROUND_FOR_BONUS = 1.0 * (MAX_ACTIONS_PER_MATCH / MAX_ACTIONS_PER_ROUND) # Max actions per round is rarely used completely
+
+all_colors = ['Azul', 'Amarelo', 'Vermelho', 'Cinza', 'Roxo', 'Verde']
 
 def roll_dice():
     return random.randint(1, 6)
@@ -122,6 +124,27 @@ class Game:
 
         return self.get_state(self.current_player)
 
+    def setup_from_state(self, state): #WIP
+        
+        main_player = self.players[0] #FIXME
+
+        self.current_phase = state[0]
+        obj_id = state[1]
+        objective = next((o for o in objectives if o.id == obj_id), None)
+        assert objective != None
+
+        colors_players = {main_player.players_dict(p): p for p in self.players}
+
+        territories_owners = state[2::2]
+        territories_troops = state[3::2]
+        for i, territory in enumerate(self.board):
+            territory.owner = colors_players[territories_owners[i]]
+            if territory.owner == 0:
+                territory.troops = territories_troops[i]
+            else:
+                territory.troops = -territories_troops[i]
+
+
 
     def display_board(self):
         for territory in self.board:
@@ -133,7 +156,10 @@ class Game:
         state.append(player.objective.id)
         for territory in self.board:
             state.append(player.players_dict(territory.owner))
-            state.append(territory.troops)
+            if territory.owner == 0:
+                state.append(territory.troops)
+            else: # Help the algorithm to differentiate other players' territories
+                state.append(-territory.troops)
         return state
     
     def get_last_reward(self, player):

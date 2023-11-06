@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-WINDOW_SIZE = 5
+WINDOW_SIZE = 50
 
 # Initialize empty lists to store data
 episodes = []

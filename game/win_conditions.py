@@ -182,6 +182,8 @@ target_colors = {
 
 objectives = [Objective(objectives_id[f], f, target_colors[f], objectives_descriptions[f]) for f in objectives_functions]
 
+def joker_objective(*args):
+    return any(objf(args) for objf in objectives_functions)
 
 def check_win(current_player, players, board):
 

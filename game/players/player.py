@@ -1,5 +1,7 @@
 from game.territories import Territory
 
+all_colors = ['Azul', 'Amarelo', 'Vermelho', 'Cinza', 'Roxo', 'Verde']
+
 class Player:
     def __init__(self, name, color, objective, is_human, godmode):
         self.name = name
@@ -21,15 +23,16 @@ class Player:
     def set_board(self, board):
         self.board = board
 
+    def get_color_number(self):
+        return (all_colors.index(self.color) + 1)
+
     def players_dict(self, player: 'Player'):
         # Attributes a number to each player based on this player's referential
-        # The map is 0=me, 1=others, 2=objective_target
+        # The map is 0=me, number=color[number - 1]
         if player==self:
             return 0
-        elif self.objective.target == player.color:
-            return 2
         else:
-            return 1
+            return (all_colors.index(player.color) + 1)
     
     def calculate_territory_change(self):
         if self.last_territory_len == 0:

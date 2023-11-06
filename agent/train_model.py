@@ -13,15 +13,16 @@ from agent.environment import WarEnvironment
 from agent.logger import CustomLogger
 from agent.random_player import RandomPlayer
 from agent.ddqn.ai_player import DQNPlayer
+from agent.ppo.ai_player import PPOPlayer
 from game.war import VICTORY_REWARD
 
 EPSILON_START = 1.0
-EPSILON_END = 1e-3
-EPSILON_DECAY = 0.995
+EPSILON_END = 0.1
+EPSILON_DECAY = 0.9995
 EPISODES = 10000
 SAVE_MODEL_FREQUENCY = 5
 
-device = ("cpu")
+device = ("cuda")
 # Uncomment next line to activate GPU support
 # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(device)
@@ -35,9 +36,13 @@ def dqn_learning(env: WarEnvironment, players: List[Union[DQNPlayer, RandomPlaye
     # Move models to the device if they are AIPlayers
     for player in players:
         print(f'Player {player.type}: ', type(player))
-        if not isinstance(player, RandomPlayer):
+        if isinstance(player, DQNPlayer):
             player.replay_buffer.reset()
             player.dqn_model.to(device)
+        elif isinstance(player, PPOPlayer):
+            player.replay_buffer.reset()
+            player.policy_network.to(device)
+            player.value_network.to(device)
 
     model_checkpoint_folder = 'models'
     logger = CustomLogger(log_file="training_log.log")
@@ -68,6 +73,7 @@ def dqn_learning(env: WarEnvironment, players: List[Union[DQNPlayer, RandomPlaye
             # Epsilon-Greedy Exploration
             if random.random() < epsilon or isinstance(current_player, RandomPlayer):
                 action = random.choice(valid_actions)
+                action = torch.tensor(action, dtype=torch.int64)
             else:
                 action = current_player.select_action(state, valid_actions_table)
 
@@ -90,12 +96,21 @@ def dqn_learning(env: WarEnvironment, players: List[Union[DQNPlayer, RandomPlaye
                     total_reward += reward
                     assert current_training_last_state[0][1] == next_state[0][1] # Objective shouldn't change
                     next_player.replay_buffer.add(current_training_last_state, 
-                                                  current_training_last_valid_actions, 
-                                                  current_training_last_action, 
-                                                  reward, 
-                                                  next_state, 
-                                                  done, 
-                                                  current_training_index)
+                                                current_training_last_valid_actions, 
+                                                current_training_last_action, 
+                                                reward, 
+                                                next_state, 
+                                                done, 
+                                                current_training_index)
+                    # if done:
+                    #     for _ in range(200):
+                    #         next_player.replay_buffer.add(current_training_last_state, 
+                    #                                 current_training_last_valid_actions, 
+                    #                                 current_training_last_action, 
+                    #                                 reward, 
+                    #                                 next_state, 
+                    #                                 done, 
+                    #                                 current_training_index)
                 current_training_last_state = next_state
                 current_training_last_action = action
                 current_training_last_valid_actions = valid_actions
@@ -116,6 +131,7 @@ def dqn_learning(env: WarEnvironment, players: List[Union[DQNPlayer, RandomPlaye
         total_reward_msg = (f"Episode {episode}, Agent {current_training.name}, Total Reward: {total_reward:.2f}, " + 
                             f"Num actions: {env.get_match_action_counter()}, Epsilon: {epsilon:.2f}")
         logger.info(total_reward_msg)
+        print('Final territories: ', len(env.game.players[current_training_index].territories))
 
         # Save the models after some episodes
         if episode % SAVE_MODEL_FREQUENCY == 0:
@@ -123,6 +139,7 @@ def dqn_learning(env: WarEnvironment, players: List[Union[DQNPlayer, RandomPlaye
                 player.save(model_checkpoint_folder, episode)
 
 def main():
+
     # Verify if the user demanded to train with a random agent or itself
     # No need to use parser just for this
     force_random_agent = (len(sys.argv) >= 2 and sys.argv[1] == '-r')
@@ -135,7 +152,7 @@ def main():
     # If resuming the training:
     try:
         checkpoint_files = os.listdir("models")
-        episodes = [int(f.split('.')[0].split('_')[3]) for f in checkpoint_files]
+        episodes = [int(f.split('.')[0].split('_')[-1]) for f in checkpoint_files]
     except FileNotFoundError:
         episodes = None
     
@@ -145,12 +162,12 @@ def main():
         
         for i in range(num_players):
             if i == 0:
-                players.append(DQNPlayer(name='ai_0', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth"))
-            elif (i == 1 and (os.path.exists(f"models/dqn_model1_episode_{episode_checkpoint}.pth") 
+                players.append(DQNPlayer(name='ai_0', load_path=f"models/dqn_model_ai_0_episode_{episode_checkpoint}.pth"))
+            elif (i == 1 and (os.path.exists(f"models/dqn_model_ai_1_episode_{episode_checkpoint}.pth") 
                             and not force_random_agent)):
-                players.append(DQNPlayer(name='ai_1', load_path=f"models/dqn_model1_episode_{episode_checkpoint}.pth"))
+                players.append(DQNPlayer(name='ai_1', load_path=f"models/dqn_model_ai_1_episode_{episode_checkpoint}.pth"))
             elif i == 1 and force_train_itself:
-                players.append(DQNPlayer(name='ai_1', load_path=f"models/dqn_model0_episode_{episode_checkpoint}.pth"))
+                players.append(DQNPlayer(name='ai_1', load_path=f"models/dqn_model_ai_0_episode_{episode_checkpoint}.pth"))
             else:
                 players.append(RandomPlayer(name=f'ai_{i}'))
 

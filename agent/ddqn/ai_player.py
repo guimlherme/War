@@ -12,11 +12,11 @@ import random
 
 # Set constants
 GAMMA = 0.999 # War is a strategic game, so we need to go for late rewards
-INTERMEDIATE_LAYER_SIZE = 128
-LEARNING_RATE = 1e-2
+INTERMEDIATE_LAYER_SIZE = 1024
+LEARNING_RATE = 1e-1
 MEMORY_CAPACITY = 10000
 BATCH_SIZE = 32
-TARGET_UPDATE_FREQUENCY = 4000
+TARGET_UPDATE_FREQUENCY = 1000
 
 def validate_q_values(valid_actions_table: list, q_values: torch.Tensor) -> torch.Tensor:
     valid_actions_table = torch.tensor(valid_actions_table, dtype=torch.bool).unsqueeze(0)
@@ -33,11 +33,13 @@ class DQNModel(nn.Module):
         super(DQNModel, self).__init__()
         self.fc1 = nn.Linear(input_size, INTERMEDIATE_LAYER_SIZE)
         self.fc2 = nn.Linear(INTERMEDIATE_LAYER_SIZE, INTERMEDIATE_LAYER_SIZE)
+        self.fc3 = nn.Linear(INTERMEDIATE_LAYER_SIZE, INTERMEDIATE_LAYER_SIZE)
         self.q_values = nn.Linear(INTERMEDIATE_LAYER_SIZE, num_actions)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
         return self.q_values(x)
 
 
@@ -72,6 +74,8 @@ class DQNPlayer:
         if random.random() < 0.001: 
             q_values = validate_q_values(valid_actions_table, q_values)
             print(self.name, torch.max(q_values).item(), action)
+            
+
         
         return action
     

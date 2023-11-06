@@ -22,15 +22,21 @@ class ReplayBuffer:
         return random.sample(self.buffer, batch_size)
 
     def register_loss(self):
-        new_data = list(self.buffer[-1])
+        last_position = (self.position - 1) % self.capacity
+        new_data = list(self.buffer[last_position])
         new_data[3] -= VICTORY_REWARD
         new_data[5] = True
-        self.buffer[-1] = tuple(new_data)
+        self.buffer[last_position] = tuple(new_data)
+        # for _ in range(200):
+        #     self.add(*new_data)
 
     def register_end(self):
-        new_data = list(self.buffer[-1])
+        last_position = (self.position - 1) % self.capacity
+        new_data = list(self.buffer[last_position])
         new_data[5] = True
-        self.buffer[-1] = tuple(new_data)
+        self.buffer[last_position] = tuple(new_data)
+        # for _ in range(200):
+        #     self.add(*new_data)
 
     def reset(self):
         self.buffer.clear()
